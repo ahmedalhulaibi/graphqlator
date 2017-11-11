@@ -1,1 +1,1 @@
-# go_genrest
+# Graphqlator CLI
