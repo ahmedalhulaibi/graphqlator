@@ -28,8 +28,8 @@ type gqlObjectType struct {
 
 var generate = &cobra.Command{
 	Use:   "generate [database type] [connection string] [table names...]",
-	Short: "Generate GraphQL type schema from database collection or table",
-	Long:  `Describe database listing tables/collections. If table name/collection name is supplied, the fields of the table/document will be described.`,
+	Short: "Generate GraphQL type schema from database table.",
+	Long:  `Generate GraphQL type schema from database table.`,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		generateGqlSchema(args[0], args[1], args[2:len(args)])
@@ -65,7 +65,7 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 		newGqlObjProperty := gqlObjectProperty{scalarName: colDesc.PropertyName, scalarType: propertyType, nullable: colDesc.Nullable, keyType: colDesc.KeyType}
 		gqlObjectTypes[colDesc.TableName].properties[colDesc.PropertyName] = newGqlObjProperty
 
-		fmt.Println(gqlObjectTypes[colDesc.TableName])
+		//fmt.Println(gqlObjectTypes[colDesc.TableName])
 	}
 	fmt.Println("------------------------")
 	relationshipDesc := []sqlsubstance.ColumnRelationship{}
@@ -97,16 +97,13 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 		*/
 		newGqlObjProperty := gqlObjectProperty{scalarName: colRel.ReferenceTableName, scalarType: colRel.ReferenceTableName, nullable: gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].nullable, keyType: gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType}
 		gqlObjectTypes[colRel.TableName].properties[colRel.ReferenceTableName] = newGqlObjProperty
-		fmt.Println("KEY TYPE: ", gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType)
 		if gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType == "MUL" {
 			newGqlObjProperty := gqlObjectProperty{scalarName: colRel.TableName, scalarType: colRel.TableName, nullable: true, isList: true}
-			fmt.Println("NEW OBJ: ", newGqlObjProperty)
 			gqlObjectTypes[colRel.ReferenceTableName].properties[colRel.TableName] = newGqlObjProperty
 		}
 		//remove old property
 		delete(gqlObjectTypes[colRel.TableName].properties, colRel.ColumnName)
-		fmt.Println("======================")
-		fmt.Println(gqlObjectTypes)
+		//fmt.Println(gqlObjectTypes)
 	}
 
 	//print schema
