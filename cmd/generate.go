@@ -1,11 +1,10 @@
 package cmd
 
 import (
-	"database/sql"
 	"fmt"
+	"strings"
 
-	_ "gopkg.in/mgo.v2"
-
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/sqlsubstance"
 	"github.com/spf13/cobra"
 )
 
@@ -13,116 +12,117 @@ func init() {
 	RootCmd.AddCommand(generate)
 }
 
-/*
-  Below query returns forein key restraints on a table
-  SELECT
-  TABLE_NAME,
-  COLUMN_NAME,
-  CONSTRAINT_NAME,
-  REFERENCED_TABLE_NAME,
-  REFERENCED_COLUMN_NAME
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-WHERE
-  REFERENCED_TABLE_NAME = 'My_Table';
-
-  When using DESCRIBE table_name the Key column tells us if it is unique or not
-         Field :  PersonID
-         Type :  int(11)
-         Null :  YES
-         Key :  MUL
-         Default : NULL
-         Extra :
-*/
-
-type columnDescriptions struct {
-	TableName           string
-	PropertyName        string
-	PropertyType        string
-	KeyType             string
-	ReferenceTableName  string
-	ReferenceColumnName string
+type gqlObjectProperty struct {
+	scalarName string
+	scalarType string
+	isList     bool
+	nullable   bool
+	keyType    string
 }
 
-var schemaTable []columnDescriptions
+type gqlObjectProperties map[string]gqlObjectProperty
+type gqlObjectType struct {
+	name       string
+	properties gqlObjectProperties
+}
 
 var generate = &cobra.Command{
-	Use:   "generate [database type] [connection string] [table name or collection name...]",
+	Use:   "generate [database type] [connection string] [table names...]",
 	Short: "Generate GraphQL type schema from database collection or table",
 	Long:  `Describe database listing tables/collections. If table name/collection name is supplied, the fields of the table/document will be described.`,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		//fmt.Println(args)
-		switch args[0] {
-		case "mysql":
-			populateSchemaTable(args[0], args[1], args[2:len(args)])
-			fmt.Println(schemaTable)
-			break
-		}
+		generateGqlSchema(args[0], args[1], args[2:len(args)])
 	},
 }
 
-func populateSchemaTable(dbType string, connectionString string, tableNames []string) {
-	for i := range tableNames {
-		processTable(dbType, connectionString, tableNames[i])
+func generateGqlSchema(dbType string, connectionString string, tableNames []string) {
+	tableDesc := []sqlsubstance.ColumnDescription{}
+	gqlObjectTypes := make(map[string]gqlObjectType)
+	for _, tableName := range tableNames {
+		newGqlObj := gqlObjectType{name: tableName}
+		newGqlObj.properties = make(gqlObjectProperties)
+		gqlObjectTypes[tableName] = newGqlObj
+		_results, _ := sqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		tableDesc = append(tableDesc, _results...)
 	}
-}
-
-func processTable(dbType string, connectionString string, tableName string) {
-
-	db, err := sql.Open(dbType, connectionString)
-	defer db.Close()
-	if err != nil {
-		panic(err.Error())
-	}
-	// Connect and check the server version
-
-	query := fmt.Sprintf("DESCRIBE %s", tableName)
-	rows, err := db.Query(query)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		panic(err.Error())
-	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
-	}
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
-		if err != nil {
-			panic(err.Error())
+	for _, colDesc := range tableDesc {
+		propertyType := ""
+		switch {
+		case strings.Contains(colDesc.PropertyType, "tinyint(4)"):
+			propertyType = "Boolean"
+			break
+		case strings.Contains(colDesc.PropertyType, "varchar"):
+			propertyType = "String"
+			break
+		case strings.Contains(colDesc.PropertyType, "int"):
+			propertyType = "Int"
+			break
+		case strings.Contains(colDesc.PropertyType, "double") || strings.Contains(colDesc.PropertyType, "float") || strings.Contains(colDesc.PropertyType, "decimal") || strings.Contains(colDesc.PropertyType, "numeric"):
+			propertyType = "Float"
+			break
 		}
+		newGqlObjProperty := gqlObjectProperty{scalarName: colDesc.PropertyName, scalarType: propertyType, nullable: colDesc.Nullable, keyType: colDesc.KeyType}
+		gqlObjectTypes[colDesc.TableName].properties[colDesc.PropertyName] = newGqlObjProperty
 
-		newCol := columnDescriptions{TableName: tableName}
-		// Print data
-		for i, value := range values {
-			switch value.(type) {
-			case nil:
-				fmt.Println("\t", columns[i], ": NULL")
-			case []byte:
-				fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
-				switch columns[i] {
-				case "Field":
-					newCol.PropertyName = string(value.([]byte))
-				case "Type":
-					newCol.PropertyType = string(value.([]byte))
-				case "Key":
-					newCol.KeyType = string(value.([]byte))
-				}
-			default:
-				fmt.Println("\t", columns[i], ": ", value)
+		fmt.Println(gqlObjectTypes[colDesc.TableName])
+	}
+	fmt.Println("------------------------")
+	relationshipDesc := []sqlsubstance.ColumnRelationship{}
+
+	for _, tableName := range tableNames {
+		_results, _ := sqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		relationshipDesc = append(relationshipDesc, _results...)
+	}
+	for _, colRel := range relationshipDesc {
+		//creating a type for col
+		/*Example:
+		Given the below sql layout
+		Orders Table
+		---------------
+		OrderID		int
+		OrderNumber int
+		PersonID	int <------ this is a foreign key reference
+		===============
+		Persons Table
+		---------------
+		ID 			int
+		Name		string
+		===============
+
+		The relationship above in graphql schema would be a has-a relationship: An order has a person associated with it
+		Additionally, depending on the key type for PersonID in orders, Persons could have a one-to-one or one-to-many relationship to Orders
+
+		This code creates a Persons relationship for Orders, and removes the PersonID reference
+		*/
+		newGqlObjProperty := gqlObjectProperty{scalarName: colRel.ReferenceTableName, scalarType: colRel.ReferenceTableName, nullable: gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].nullable, keyType: gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType}
+		gqlObjectTypes[colRel.TableName].properties[colRel.ReferenceTableName] = newGqlObjProperty
+		fmt.Println("KEY TYPE: ", gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType)
+		if gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType == "MUL" {
+			newGqlObjProperty := gqlObjectProperty{scalarName: colRel.TableName, scalarType: colRel.TableName, nullable: true, isList: true}
+			fmt.Println("NEW OBJ: ", newGqlObjProperty)
+			gqlObjectTypes[colRel.ReferenceTableName].properties[colRel.TableName] = newGqlObjProperty
+		}
+		//remove old property
+		delete(gqlObjectTypes[colRel.TableName].properties, colRel.ColumnName)
+		fmt.Println("======================")
+		fmt.Println(gqlObjectTypes)
+	}
+
+	//print schema
+	for _, value := range gqlObjectTypes {
+		fmt.Printf("type %s {\n", value.name)
+		for _, propVal := range value.properties {
+			nullSymbol := "!"
+			if propVal.nullable {
+				nullSymbol = ""
+			}
+			if propVal.isList {
+				fmt.Printf("\t %s: [%s]%s\n", propVal.scalarName, propVal.scalarType, nullSymbol)
+			} else {
+				fmt.Printf("\t %s: %s%s\n", propVal.scalarName, propVal.scalarType, nullSymbol)
 			}
 		}
-		schemaTable = append(schemaTable, newCol)
-		fmt.Println("-----------------------------------")
+		fmt.Println("}")
 	}
 }

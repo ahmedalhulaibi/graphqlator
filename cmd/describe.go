@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"database/sql"
 	"fmt"
 
-	_ "gopkg.in/mgo.v2"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/sqlsubstance"
 
 	"github.com/spf13/cobra"
 )
@@ -14,86 +13,60 @@ func init() {
 }
 
 var describe = &cobra.Command{
-	Use:   "describe [database type] [connection string] [table name or collection name]",
-	Short: "Describe database, collection, or table",
-	Long:  `Describe database listing tables/collections. If table name/collection name is supplied, the fields of the table/document will be described.`,
+	Use:   "describe [database type] [connection string] [table name]",
+	Short: "Describe database or table",
+	Long:  `Describe database listing tables. If table name is supplied, the fields of the table will be described.`,
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//fmt.Println(args)
-		switch args[0] {
-		case "mysql":
-			if len(args) > 2 {
-				describleTable(args[0], args[1], args[2:len(args)])
-			} else {
-				describeDatabase(args[0], args[1])
-			}
-			break
+		if len(args) > 2 {
+			describleTable(args[0], args[1], args[2:len(args)])
+		} else {
+			describeDatabase(args[0], args[1])
 		}
 	},
 }
 
 func describeDatabase(dbType string, connectionString string) {
 	fmt.Println("------TABLES FOUND------")
-	runQuery(dbType, connectionString, "SHOW TABLES")
+	results, err := sqlsubstance.DescribeDatabase(dbType, connectionString)
+	if err != nil {
+		panic(err)
+	}
+	for _, result := range results {
+
+		fmt.Println(result)
+	}
 	fmt.Println("------------------------")
 }
 
 func describleTable(dbType string, connectionString string, tableNames []string) {
+	tableDesc := []sqlsubstance.ColumnDescription{}
 	for _, tableName := range tableNames {
-		fmt.Printf("------TABLE %s DESCRIPTION------\n", tableName)
-		query := fmt.Sprintf("DESCRIBE %s", tableName)
-		runQuery(dbType, connectionString, query)
-		fmt.Println("------------------------")
+		_results, _ := sqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		tableDesc = append(tableDesc, _results...)
 	}
-}
-
-func runQuery(dbType string, connectionString string, queryString string) {
-
-	db, err := sql.Open(dbType, connectionString)
-	defer db.Close()
-	if err != nil {
-		panic(err.Error())
+	for _, colDesc := range tableDesc {
+		fmt.Println(colDesc)
+		fmt.Println("Table Name:\t", colDesc.TableName)
+		fmt.Println("Property Name:\t", colDesc.PropertyName)
+		fmt.Println("Property Type:\t", colDesc.PropertyType)
+		fmt.Println("Key Type:\t", colDesc.KeyType)
+		fmt.Println("Nullable:\t", colDesc.Nullable)
 	}
-	// Connect and check the server version
+	fmt.Println("------------------------")
+	relationshipDesc := []sqlsubstance.ColumnRelationship{}
 
-	rows, err := db.Query(queryString)
-	if err != nil {
-		panic(err.Error())
+	for _, tableName := range tableNames {
+		_results, _ := sqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		relationshipDesc = append(relationshipDesc, _results...)
 	}
-
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		panic(err.Error())
+	for _, colRel := range relationshipDesc {
+		fmt.Println(colRel)
+		fmt.Println("Table Name:\t", colRel.TableName)
+		fmt.Println("Column Name:\t", colRel.ColumnName)
+		fmt.Println("Ref Table Name:\t", colRel.ReferenceTableName)
+		fmt.Println("Ref Col Name:\t", colRel.ReferenceColumnName)
 	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
-	}
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		// Print data
-		for i, value := range values {
-			switch value.(type) {
-			case nil:
-				fmt.Println("\t", columns[i], ": NULL")
-
-			case []byte:
-				fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
-
-			default:
-				fmt.Println("\t", columns[i], ": ", value)
-			}
-		}
-		fmt.Println("-----------------------------------")
-	}
+	fmt.Println("------------------------")
 }
