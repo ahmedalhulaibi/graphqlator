@@ -1,4 +1,4 @@
-package sqlsubstance
+package mysqlsubstance
 
 import (
 	"database/sql"
@@ -23,7 +23,8 @@ type ColumnRelationship struct {
 	ReferenceColumnName string
 }
 
-func getCurrentDatabaseName(dbType string, connectionString string) (string, error) {
+/*GetCurrentDatabaseName returns currrent database schema name as string*/
+func GetCurrentDatabaseName(dbType string, connectionString string) (string, error) {
 	db, err := sql.Open(dbType, connectionString)
 	defer db.Close()
 	if err != nil {
@@ -32,6 +33,9 @@ func getCurrentDatabaseName(dbType string, connectionString string) (string, err
 	var query string
 	switch dbType {
 	case "mysql":
+		query = "SELECT DATABASE()"
+		break
+	case "mariadb":
 		query = "SELECT DATABASE()"
 		break
 	}
@@ -109,7 +113,7 @@ func DescribeDatabase(dbType string, connectionString string) ([]ColumnDescripti
 	}
 
 	columnDesc := []ColumnDescription{}
-	databaseName, err := getCurrentDatabaseName(dbType, connectionString)
+	databaseName, err := GetCurrentDatabaseName(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +177,7 @@ func DescribeTable(dbType string, connectionString string, tableName string) ([]
 	}
 
 	columnDesc := []ColumnDescription{}
-	databaseName, err := getCurrentDatabaseName(dbType, connectionString)
+	databaseName, err := GetCurrentDatabaseName(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +229,7 @@ func DescribeTableRelationship(dbType string, connectionString string, tableName
 	if err != nil {
 		return nil, err
 	}
-	databaseName, err := getCurrentDatabaseName(dbType, connectionString)
+	databaseName, err := GetCurrentDatabaseName(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}

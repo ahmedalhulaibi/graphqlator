@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/sqlsubstance"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/mysqlsubstance"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +21,7 @@ type gqlObjectProperty struct {
 }
 
 type gqlObjectProperties map[string]gqlObjectProperty
+
 type gqlObjectType struct {
 	name       string
 	properties gqlObjectProperties
@@ -28,8 +29,8 @@ type gqlObjectType struct {
 
 var generate = &cobra.Command{
 	Use:   "generate [database type] [connection string] [table names...]",
-	Short: "Generate GraphQL type schema from database table.",
-	Long:  `Generate GraphQL type schema from database table.`,
+	Short: "Generate GraphQL type schema from database table(s).",
+	Long:  `Generate GraphQL type schema from database table(s).`,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		generateGqlSchema(args[0], args[1], args[2:len(args)])
@@ -37,13 +38,13 @@ var generate = &cobra.Command{
 }
 
 func generateGqlSchema(dbType string, connectionString string, tableNames []string) {
-	tableDesc := []sqlsubstance.ColumnDescription{}
+	tableDesc := []mysqlsubstance.ColumnDescription{}
 	gqlObjectTypes := make(map[string]gqlObjectType)
 	for _, tableName := range tableNames {
 		newGqlObj := gqlObjectType{name: tableName}
 		newGqlObj.properties = make(gqlObjectProperties)
 		gqlObjectTypes[tableName] = newGqlObj
-		_results, _ := sqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		_results, _ := mysqlsubstance.DescribeTable(dbType, connectionString, tableName)
 		tableDesc = append(tableDesc, _results...)
 	}
 	for _, colDesc := range tableDesc {
@@ -67,11 +68,10 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 
 		//fmt.Println(gqlObjectTypes[colDesc.TableName])
 	}
-	fmt.Println("------------------------")
-	relationshipDesc := []sqlsubstance.ColumnRelationship{}
+	relationshipDesc := []mysqlsubstance.ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, _ := sqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, _ := mysqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {

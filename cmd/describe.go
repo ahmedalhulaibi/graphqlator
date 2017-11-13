@@ -3,8 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/sqlsubstance"
-
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/mysqlsubstance"
 	"github.com/spf13/cobra"
 )
 
@@ -13,9 +12,9 @@ func init() {
 }
 
 var describe = &cobra.Command{
-	Use:   "describe [database type] [connection string] [table name]",
-	Short: "Describe database or table",
-	Long:  `Describe database listing tables. If table name is supplied, the fields of the table will be described.`,
+	Use:   "describe [database type] [connection string] [table names...]",
+	Short: "List database tables or describe columns of table(s)",
+	Long:  `List database tables or describe columns of table(s). If no table names given, it will list tables in database. If table names supplied, the columns of the tables will be described.`,
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//fmt.Println(args)
@@ -28,37 +27,39 @@ var describe = &cobra.Command{
 }
 
 func describeDatabase(dbType string, connectionString string) {
-	fmt.Println("------TABLES FOUND------")
-	results, err := sqlsubstance.DescribeDatabase(dbType, connectionString)
+	results, err := mysqlsubstance.DescribeDatabase(dbType, connectionString)
 	if err != nil {
 		panic(err)
 	}
-	for _, result := range results {
-
-		fmt.Println(result)
+	if len(results) > 0 {
+		fmt.Println("Database: ", results[0].DatabaseName)
 	}
-	fmt.Println("------------------------")
+	for _, result := range results {
+		fmt.Printf("Table: %s\n", result.TableName)
+	}
+	fmt.Println("=====================")
 }
 
 func describleTable(dbType string, connectionString string, tableNames []string) {
-	tableDesc := []sqlsubstance.ColumnDescription{}
+	tableDesc := []mysqlsubstance.ColumnDescription{}
 	for _, tableName := range tableNames {
-		_results, _ := sqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		_results, _ := mysqlsubstance.DescribeTable(dbType, connectionString, tableName)
 		tableDesc = append(tableDesc, _results...)
 	}
 	for _, colDesc := range tableDesc {
-		fmt.Println(colDesc)
+		//fmt.Println(colDesc)
 		fmt.Println("Table Name:\t", colDesc.TableName)
 		fmt.Println("Property Name:\t", colDesc.PropertyName)
 		fmt.Println("Property Type:\t", colDesc.PropertyType)
 		fmt.Println("Key Type:\t", colDesc.KeyType)
 		fmt.Println("Nullable:\t", colDesc.Nullable)
+		fmt.Println("------------------------")
 	}
-	fmt.Println("------------------------")
-	relationshipDesc := []sqlsubstance.ColumnRelationship{}
+	fmt.Println("=====================")
+	relationshipDesc := []mysqlsubstance.ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, _ := sqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, _ := mysqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {
@@ -68,5 +69,5 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("Ref Table Name:\t", colRel.ReferenceTableName)
 		fmt.Println("Ref Col Name:\t", colRel.ReferenceColumnName)
 	}
-	fmt.Println("------------------------")
+	fmt.Println("=====================")
 }

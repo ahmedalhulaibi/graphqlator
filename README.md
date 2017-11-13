@@ -6,7 +6,6 @@ A command line tool that generates a GraphQL type schema from a database table s
 Supported Data Stores:
 
 - mysql
-- postgres __*WIP*__
 - mongoDB __*WIP*__
 
 
