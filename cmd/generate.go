@@ -33,6 +33,11 @@ var generate = &cobra.Command{
 	Long:  `Generate GraphQL type schema from database table(s).`,
 	Args:  cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
+		switch args[0] {
+		case "mariadb":
+			args[0] = "mysql"
+			break
+		}
 		generateGqlSchema(args[0], args[1], args[2:len(args)])
 	},
 }
@@ -44,7 +49,10 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 		newGqlObj := gqlObjectType{name: tableName}
 		newGqlObj.properties = make(gqlObjectProperties)
 		gqlObjectTypes[tableName] = newGqlObj
-		_results, _ := mysqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		_results, err := mysqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		if err != nil {
+			panic(err)
+		}
 		tableDesc = append(tableDesc, _results...)
 	}
 	for _, colDesc := range tableDesc {
@@ -71,7 +79,10 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 	relationshipDesc := []mysqlsubstance.ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, _ := mysqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, err := mysqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		if err != nil {
+			panic(err)
+		}
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {

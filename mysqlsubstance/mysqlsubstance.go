@@ -71,7 +71,8 @@ func GetCurrentDatabaseName(dbType string, connectionString string) (string, err
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
-				return "nil", err
+				err := fmt.Errorf("No database found make sure connection string includes database. e.g. user:pass@localhost:port/database")
+				return "nil", error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 				returnValue = string(value.([]byte))
@@ -126,10 +127,13 @@ func DescribeDatabase(dbType string, connectionString string) ([]ColumnDescripti
 		}
 
 		// Print data
-		for _, value := range values {
+		for i, value := range values {
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
+
+				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
+				return nil, error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 				newColDesc.TableName = string(value.([]byte))
@@ -194,6 +198,8 @@ func DescribeTable(dbType string, connectionString string, tableName string) ([]
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
+				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
+				return nil, error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
@@ -274,6 +280,8 @@ func DescribeTableRelationship(dbType string, connectionString string, tableName
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
+				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
+				return nil, error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 

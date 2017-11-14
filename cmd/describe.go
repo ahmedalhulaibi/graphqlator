@@ -18,6 +18,11 @@ var describe = &cobra.Command{
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//fmt.Println(args)
+		switch args[0] {
+		case "mariadb":
+			args[0] = "mysql"
+			break
+		}
 		if len(args) > 2 {
 			describleTable(args[0], args[1], args[2:len(args)])
 		} else {
