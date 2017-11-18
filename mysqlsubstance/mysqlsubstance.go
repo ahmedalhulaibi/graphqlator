@@ -3,28 +3,16 @@ package mysqlsubstance
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 )
 
-/*ColumnDescription Structure to store properties of each column in a table */
-type ColumnDescription struct {
-	DatabaseName string
-	TableName    string
-	PropertyName string
-	PropertyType string
-	KeyType      string
-	Nullable     bool
-}
-
-/*ColumnRelationship Structure to store relationships between tables*/
-type ColumnRelationship struct {
-	TableName           string
-	ColumnName          string
-	ReferenceTableName  string
-	ReferenceColumnName string
+type mysql struct {
+	name string
 }
 
 /*GetCurrentDatabaseName returns currrent database schema name as string*/
-func GetCurrentDatabaseName(dbType string, connectionString string) (string, error) {
+func (m mysql) GetCurrentDatabaseNameFunc(dbType string, connectionString string) (string, error) {
 	db, err := sql.Open(dbType, connectionString)
 	defer db.Close()
 	if err != nil {
@@ -87,7 +75,7 @@ func GetCurrentDatabaseName(dbType string, connectionString string) (string, err
 }
 
 /*DescribeDatabase returns tables in database*/
-func DescribeDatabase(dbType string, connectionString string) ([]ColumnDescription, error) {
+func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]substance.ColumnDescription, error) {
 	db, err := sql.Open(dbType, connectionString)
 	defer db.Close()
 	if err != nil {
@@ -113,12 +101,13 @@ func DescribeDatabase(dbType string, connectionString string) ([]ColumnDescripti
 		scanArgs[i] = &values[i]
 	}
 
-	columnDesc := []ColumnDescription{}
-	databaseName, err := GetCurrentDatabaseName(dbType, connectionString)
+	columnDesc := []substance.ColumnDescription{}
+	var subsInterface = mysql{}
+	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
-	newColDesc := ColumnDescription{DatabaseName: databaseName, PropertyType: "Table"}
+	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, PropertyType: "Table"}
 
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
@@ -152,7 +141,7 @@ func DescribeDatabase(dbType string, connectionString string) ([]ColumnDescripti
 }
 
 /*DescribeTable returns columns in database*/
-func DescribeTable(dbType string, connectionString string, tableName string) ([]ColumnDescription, error) {
+func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnDescription, error) {
 
 	db, err := sql.Open(dbType, connectionString)
 	defer db.Close()
@@ -180,12 +169,13 @@ func DescribeTable(dbType string, connectionString string, tableName string) ([]
 		scanArgs[i] = &values[i]
 	}
 
-	columnDesc := []ColumnDescription{}
-	databaseName, err := GetCurrentDatabaseName(dbType, connectionString)
+	columnDesc := []substance.ColumnDescription{}
+	var subsInterface = mysql{}
+	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
-	newColDesc := ColumnDescription{DatabaseName: databaseName, TableName: tableName}
+	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, TableName: tableName}
 
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
@@ -197,9 +187,10 @@ func DescribeTable(dbType string, connectionString string, tableName string) ([]
 		for i, value := range values {
 			switch value.(type) {
 			case nil:
+				//IGNORE NIL VALUE
 				//fmt.Println("\t", columns[i], ": NULL")
-				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
-				return nil, error(err)
+				//err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
+				//return nil, error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
@@ -228,14 +219,15 @@ func DescribeTable(dbType string, connectionString string, tableName string) ([]
 }
 
 /*DescribeTableRelationship returns all foreign column references in database table*/
-func DescribeTableRelationship(dbType string, connectionString string, tableName string) ([]ColumnRelationship, error) {
+func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnRelationship, error) {
 
 	db, err := sql.Open(dbType, connectionString)
 	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
-	databaseName, err := GetCurrentDatabaseName(dbType, connectionString)
+	subsInterface := mysql{}
+	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -266,8 +258,8 @@ func DescribeTableRelationship(dbType string, connectionString string, tableName
 		scanArgs[i] = &values[i]
 	}
 
-	columnDesc := []ColumnRelationship{}
-	newColDesc := ColumnRelationship{}
+	columnDesc := []substance.ColumnRelationship{}
+	newColDesc := substance.ColumnRelationship{}
 
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
@@ -303,4 +295,9 @@ func DescribeTableRelationship(dbType string, connectionString string, tableName
 		//fmt.Println("-----------------------------------")
 	}
 	return columnDesc, nil
+}
+
+func init() {
+	mysqlPlugin := mysql{}
+	substance.Register("mysql", mysqlPlugin)
 }

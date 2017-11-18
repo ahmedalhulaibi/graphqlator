@@ -1,4 +1,4 @@
-main/debug
+debug
 *.sql
 .vscode/
 tests.sh

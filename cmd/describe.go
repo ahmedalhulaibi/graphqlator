@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/mysqlsubstance"
+	. "github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ var describe = &cobra.Command{
 }
 
 func describeDatabase(dbType string, connectionString string) {
-	results, err := mysqlsubstance.DescribeDatabase(dbType, connectionString)
+	results, err := DescribeDatabase(dbType, connectionString)
 	if err != nil {
 		panic(err)
 	}
@@ -46,9 +46,9 @@ func describeDatabase(dbType string, connectionString string) {
 }
 
 func describleTable(dbType string, connectionString string, tableNames []string) {
-	tableDesc := []mysqlsubstance.ColumnDescription{}
+	tableDesc := []ColumnDescription{}
 	for _, tableName := range tableNames {
-		_results, _ := mysqlsubstance.DescribeTable(dbType, connectionString, tableName)
+		_results, _ := DescribeTable(dbType, connectionString, tableName)
 		tableDesc = append(tableDesc, _results...)
 	}
 	for _, colDesc := range tableDesc {
@@ -61,10 +61,10 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("------------------------")
 	}
 	fmt.Println("=====================")
-	relationshipDesc := []mysqlsubstance.ColumnRelationship{}
+	relationshipDesc := []ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, _ := mysqlsubstance.DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, _ := DescribeTableRelationship(dbType, connectionString, tableName)
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {
