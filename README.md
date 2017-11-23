@@ -1,4 +1,6 @@
 # Graphqlator CLI
+__*This project is a WIP. The end goal is to generate source for a static graphql server*__
+
 Graphqlator helps you generate a GraphQL type schema. Type 'graphqlator help' to see usage.
 
 A command line tool that generates a GraphQL type schema from a database table schema.
@@ -7,7 +9,8 @@ Supported Data Stores:
 
 - mysql
 - mariadb
-- mongoDB __*WIP*__
+- postgres __*WIP*__
+- mongoDB __*PLANNED*__
 
 
 Usage:

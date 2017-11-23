@@ -2,4 +2,3 @@ debug
 *.sql
 .vscode/
 tests.sh
-graphqlator

@@ -7,6 +7,12 @@ import (
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 )
 
+func init() {
+	mysqlPlugin := mysql{}
+	substance.Register("mysql", &mysqlPlugin)
+	substance.Register("mariadb", &mysqlPlugin)
+}
+
 type mysql struct {
 	name string
 }
@@ -18,15 +24,7 @@ func (m mysql) GetCurrentDatabaseNameFunc(dbType string, connectionString string
 	if err != nil {
 		return "nil", err
 	}
-	var query string
-	switch dbType {
-	case "mysql":
-		query = "SELECT DATABASE()"
-		break
-	case "mariadb":
-		query = "SELECT DATABASE()"
-		break
-	}
+	query := "SELECT DATABASE()"
 	rows, err := db.Query(query)
 	if err != nil {
 		return "nil", err
@@ -295,9 +293,4 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 		//fmt.Println("-----------------------------------")
 	}
 	return columnDesc, nil
-}
-
-func init() {
-	mysqlPlugin := mysql{}
-	substance.Register("mysql", mysqlPlugin)
 }
