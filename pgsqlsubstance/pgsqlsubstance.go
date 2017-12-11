@@ -9,7 +9,6 @@ import (
 
 func init() {
 	pgsqlPlugin := pgsql{}
-	substance.Register("pgsql", &pgsqlPlugin)
 	substance.Register("postgres", &pgsqlPlugin)
 }
 
@@ -26,12 +25,14 @@ func (m pgsql) GetCurrentDatabaseNameFunc(dbType string, connectionString string
 
 /*DescribeDatabase returns tables in database*/
 func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]substance.ColumnDescription, error) {
-	db, err := sql.Open(dbType, connectionString)
+	postgresString := "postgres://"
+	connString := postgresString + connectionString
+	db, err := sql.Open(dbType, connString)
 	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query('')
+	rows, err := db.Query("SELECT * FROM pg_catalog.pg_tables where schemaname not in ('pg_catalog','information_schema');")
 	if err != nil {
 		return nil, err
 	}
@@ -71,17 +72,18 @@ func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
 
-				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
-				return nil, error(err)
+				//fmt.Printf("Null column value found at column: '%s' index: '%d'\n", columns[i], i)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
-				newColDesc.TableName = string(value.([]byte))
-				newColDesc.PropertyName = string(value.([]byte))
+				switch columns[i] {
+				case "tablename":
+					newColDesc.TableName = string(value.([]byte))
+				case "schemaname":
+					newColDesc.PropertyName = string(value.([]byte))
+				}
 
 			default:
 				//fmt.Println("\t", columns[i], ": ", value)
-				newColDesc.TableName = string(value.([]byte))
-				newColDesc.PropertyName = string(value.([]byte))
 			}
 		}
 		columnDesc = append(columnDesc, newColDesc)
@@ -92,13 +94,14 @@ func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 
 /*DescribeTable returns columns in database*/
 func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnDescription, error) {
-
-	db, err := sql.Open(dbType, connectionString)
+	postgresString := "postgres://"
+	connString := postgresString + connectionString
+	db, err := sql.Open(dbType, connString)
 	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	rows, err := db.Query(`select
 		att.attrelid as "classId",
 		class.relname as "Table",
@@ -119,14 +122,14 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 			from pg_catalog.pg_class as rel
 			left join pg_catalog.pg_description as dsc on dsc.objoid = rel.oid and dsc.objsubid = 0
 			where 
-			class.relname = '$1' and
+			class.relname = $1 and
 			rel.relpersistence in ('p') and
 			rel.relkind in ('r', 'v', 'm', 'c', 'f')
 		) and
 		att.attnum > 0 and
 		not att.attisdropped
 	  order by
-		att.attrelid, att.attnum;`,tableName)
+		att.attrelid, att.attnum;`, tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -197,14 +200,15 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 
 /*DescribeTableRelationship returns all foreign column references in database table*/
 func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnRelationship, error) {
-
-	db, err := sql.Open(dbType, connectionString)
+	postgresString := "postgres://"
+	connString := postgresString + connectionString
+	db, err := sql.Open(dbType, connString)
 	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
-	subsInterface := pgsql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+	//subsInterface := pgsql{}
+	//databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +225,7 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
   where
 		tc.table_name = $1 and
 		con.contype = 'f'
-  ;`,tableName)
+  ;`, tableName)
 	if err != nil {
 		return nil, err
 	}

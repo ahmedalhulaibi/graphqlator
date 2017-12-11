@@ -10,7 +10,6 @@ import (
 func init() {
 	mysqlPlugin := mysql{}
 	substance.Register("mysql", &mysqlPlugin)
-	substance.Register("mariadb", &mysqlPlugin)
 }
 
 type mysql struct {
@@ -24,8 +23,7 @@ func (m mysql) GetCurrentDatabaseNameFunc(dbType string, connectionString string
 	if err != nil {
 		return "nil", err
 	}
-	query := "SELECT DATABASE()"
-	rows, err := db.Query(query)
+	rows, err := db.Query("SELECT DATABASE()")
 	if err != nil {
 		return "nil", err
 	}

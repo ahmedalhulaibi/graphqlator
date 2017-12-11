@@ -13,6 +13,7 @@ var substancePlugins = make(map[string]SubstanceInterface)
 
 /*Register registers a sbustance plugin which implements the Substance interface*/
 func Register(pluginName string, pluginInterface SubstanceInterface) {
+	//fmt.Println(substancePlugins)
 	substancePlugins[pluginName] = pluginInterface
 }
 

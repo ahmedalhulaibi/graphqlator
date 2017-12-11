@@ -17,12 +17,6 @@ var describe = &cobra.Command{
 	Long:  `List database tables or describe columns of table(s). If no table names given, it will list tables in database. If table names supplied, the columns of the tables will be described.`,
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//fmt.Println(args)
-		switch args[0] {
-		case "mariadb":
-			args[0] = "mysql"
-			break
-		}
 		if len(args) > 2 {
 			describleTable(args[0], args[1], args[2:len(args)])
 		} else {
