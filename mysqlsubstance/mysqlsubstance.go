@@ -292,3 +292,68 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	}
 	return columnDesc, nil
 }
+
+/*DescribeTableRelationship returns all foreign column references in database table*/
+func (m mysql) DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnConstraint, error) {
+	db, err := sql.Open(dbType, connectionString)
+	defer db.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	query := fmt.Sprintf(`SELECT DISTINCT kcu.column_name as 'Column', tc.constraint_type as 'Constraint'
+		FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE as kcu
+		JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS as tc on tc.constraint_name = kcu.constraint_name
+		WHERE kcu.table_name = '%s'
+		order by kcu.column_name, tc.constraint_type;`, tableName)
+	rows, err := db.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	// Make a slice for the values
+	values := make([]interface{}, len(columns))
+
+	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
+	// references into such a slice
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	columnDesc := []substance.ColumnConstraint{}
+	newColDesc := substance.ColumnConstraint{}
+
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		// Print data
+		for i, value := range values {
+			newColDesc.TableName = tableName
+			switch value.(type) {
+			case []byte:
+				switch columns[i] {
+				case "Column":
+					newColDesc.ColumnName = string(value.([]byte))
+				case "Constraint":
+					newColDesc.ConstraintType = string(value.([]byte))
+				}
+			}
+		}
+		columnDesc = append(columnDesc, newColDesc)
+		//fmt.Println("-----------------------------------")
+	}
+	return columnDesc, nil
+}

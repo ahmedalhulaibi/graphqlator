@@ -69,25 +69,16 @@ func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 		// Print data
 		for i, value := range values {
 			switch value.(type) {
-			case nil:
-				//fmt.Println("\t", columns[i], ": NULL")
-
-				//fmt.Printf("Null column value found at column: '%s' index: '%d'\n", columns[i], i)
 			case []byte:
-				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 				switch columns[i] {
 				case "tablename":
 					newColDesc.TableName = string(value.([]byte))
 				case "schemaname":
 					newColDesc.PropertyName = string(value.([]byte))
 				}
-
-			default:
-				//fmt.Println("\t", columns[i], ": ", value)
 			}
 		}
 		columnDesc = append(columnDesc, newColDesc)
-		//fmt.Println("-----------------------------------")
 	}
 	return columnDesc, nil
 }
@@ -157,6 +148,12 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	}
 	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, TableName: tableName}
 
+	//get all column constraints to determine key type
+	columnConstraints, err := getAllContraints(dbType, connectionString, tableName)
+	if err != nil {
+		return nil, err
+	}
+
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		if err != nil {
@@ -166,21 +163,13 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 		// Print data
 		for i, value := range values {
 			switch value.(type) {
-			case nil:
-				//IGNORE NIL VALUE
-				//fmt.Println("\t", columns[i], ": NULL")
-				//err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
-				//return nil, error(err)
 			case []byte:
-				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
 				switch columns[i] {
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
 					newColDesc.PropertyType = string(value.([]byte))
-				case "Key":
-					newColDesc.KeyType = string(value.([]byte))
 				case "isNotNull":
 					if string(value.([]byte)) == "f" {
 						newColDesc.Nullable = true
@@ -188,8 +177,6 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 						newColDesc.Nullable = false
 					}
 				}
-			default:
-				//fmt.Println("\t", columns[i], ": ", value)
 			}
 		}
 		columnDesc = append(columnDesc, newColDesc)
@@ -207,8 +194,7 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	//subsInterface := pgsql{}
-	//databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
 	if err != nil {
 		return nil, err
 	}
@@ -257,29 +243,110 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 		// Print data
 		for i, value := range values {
 			switch value.(type) {
-			case nil:
-				//fmt.Println("\t", columns[i], ": NULL")
-				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
-				return nil, error(err)
 			case []byte:
-				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
+				fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
 				switch columns[i] {
-				case "TABLE_NAME":
+				case "table_name":
 					newColDesc.TableName = string(value.([]byte))
-				case "COLUMN_NAME":
+				case "column":
 					newColDesc.ColumnName = string(value.([]byte))
-				case "REFERENCED_TABLE_NAME":
+				case "ref_table":
 					newColDesc.ReferenceTableName = string(value.([]byte))
-				case "REFERENCED_COLUMN_NAME":
+				case "ref_columnNum":
 					newColDesc.ReferenceColumnName = string(value.([]byte))
+				}
+			}
+		}
+		columnDesc = append(columnDesc, newColDesc)
+	}
+	return columnDesc, nil
+}
+
+type columnConstraint struct {
+	TableName           string
+	ColumnName          string
+	ReferenceTableName  string
+	ReferenceColumnName string
+	KeyType             string
+}
+
+func getAllContraints(dbType string, connectionString string, tableName string) ([]columnConstraint, error) {
+	postgresString := "postgres://"
+	connString := postgresString + connectionString
+	db, err := sql.Open(dbType, connString)
+	defer db.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(`select distinct on (con.conrelid, con.conkey, con.confrelid, con.confkey)
+	tc.table_name,
+	kcu.column_name as "column",
+	class.relname as "ref_table",
+	con.confkey as "ref_columnNum"
+  from
+	pg_catalog.pg_constraint as con
+	left join information_schema.table_constraints as tc on tc.constraint_name = con.conname
+	left join information_schema.key_column_usage as kcu on kcu.constraint_name = con.conname
+	left join pg_catalog.pg_class as class on class.oid = con.confrelid
+  where
+		tc.table_name = $1
+  ;`, tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	// Make a slice for the values
+	values := make([]interface{}, len(columns))
+
+	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
+	// references into such a slice
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	columnDesc := []columnConstraint{}
+	newColDesc := columnConstraint{}
+
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		// Print data
+		for i, value := range values {
+			switch value.(type) {
+			case []byte:
+				fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
+
+				switch columns[i] {
+				case "table_name":
+					newColDesc.TableName = string(value.([]byte))
+				case "column":
+					newColDesc.ColumnName = string(value.([]byte))
+				case "ref_table":
+					newColDesc.ReferenceTableName = string(value.([]byte))
+				case "ref_columnNum":
+					newColDesc.ReferenceColumnName = string(value.([]byte))
+				case "contype":
+					newColDesc.KeyType = string(value.([]byte))
 				}
 			default:
 				//fmt.Println("\t", columns[i], ": ", value)
 			}
 		}
 		columnDesc = append(columnDesc, newColDesc)
-		//fmt.Println("-----------------------------------")
 	}
 	return columnDesc, nil
 }

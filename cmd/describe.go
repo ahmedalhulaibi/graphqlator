@@ -69,4 +69,17 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("Ref Col Name:\t", colRel.ReferenceColumnName)
 	}
 	fmt.Println("=====================")
+	contraintDesc := []ColumnConstraint{}
+
+	for _, tableName := range tableNames {
+		_results, _ := DescribeTableConstraints(dbType, connectionString, tableName)
+		contraintDesc = append(contraintDesc, _results...)
+	}
+	for _, colCon := range contraintDesc {
+		fmt.Println(colCon)
+		fmt.Println("Table Name:\t", colCon.TableName)
+		fmt.Println("Column Name:\t", colCon.ColumnName)
+		fmt.Println("Constraint:\t", colCon.ConstraintType)
+	}
+	fmt.Println("=====================")
 }

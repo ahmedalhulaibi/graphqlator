@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 	"github.com/spf13/cobra"
 )
 
@@ -43,13 +43,13 @@ var generate = &cobra.Command{
 }
 
 func generateGqlSchema(dbType string, connectionString string, tableNames []string) {
-	tableDesc := []ColumnDescription{}
+	tableDesc := []substance.ColumnDescription{}
 	gqlObjectTypes := make(map[string]gqlObjectType)
 	for _, tableName := range tableNames {
 		newGqlObj := gqlObjectType{name: tableName}
 		newGqlObj.properties = make(gqlObjectProperties)
 		gqlObjectTypes[tableName] = newGqlObj
-		_results, err := DescribeTable(dbType, connectionString, tableName)
+		_results, err := substance.DescribeTable(dbType, connectionString, tableName)
 		if err != nil {
 			panic(err)
 		}
@@ -76,10 +76,10 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 
 		//fmt.Println(gqlObjectTypes[colDesc.TableName])
 	}
-	relationshipDesc := []ColumnRelationship{}
+	relationshipDesc := []substance.ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, err := DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, err := substance.DescribeTableRelationship(dbType, connectionString, tableName)
 		if err != nil {
 			panic(err)
 		}

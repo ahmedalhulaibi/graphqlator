@@ -6,6 +6,7 @@ type SubstanceInterface interface {
 	DescribeDatabaseFunc(dbType string, connectionString string) ([]ColumnDescription, error)
 	DescribeTableFunc(dbType string, connectionString string, tableName string) ([]ColumnDescription, error)
 	DescribeTableRelationshipFunc(dbType string, connectionString string, tableName string) ([]ColumnRelationship, error)
+	DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]ColumnConstraint, error)
 }
 
 /*substance plugin map*/
@@ -35,6 +36,13 @@ type ColumnRelationship struct {
 	ReferenceColumnName string
 }
 
+/*ColumnConstraint Struct to store column constraint types*/
+type ColumnConstraint struct {
+	TableName      string
+	ColumnName     string
+	ConstraintType string
+}
+
 func GetCurrentDatabaseName(dbType string, connectionString string) (string, error) {
 	return substancePlugins[dbType].GetCurrentDatabaseNameFunc(dbType, connectionString)
 }
@@ -47,4 +55,8 @@ func DescribeTable(dbType string, connectionString string, tableName string) ([]
 }
 func DescribeTableRelationship(dbType string, connectionString string, tableName string) ([]ColumnRelationship, error) {
 	return substancePlugins[dbType].DescribeTableRelationshipFunc(dbType, connectionString, tableName)
+}
+
+func DescribeTableConstraints(dbType string, connectionString string, tableName string) ([]ColumnConstraint, error) {
+	return substancePlugins[dbType].DescribeTableConstraintsFunc(dbType, connectionString, tableName)
 }
