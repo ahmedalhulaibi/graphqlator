@@ -25,14 +25,19 @@ func (m pgsql) GetCurrentDatabaseNameFunc(dbType string, connectionString string
 
 /*DescribeDatabase returns tables in database*/
 func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]substance.ColumnDescription, error) {
+	//prepend postgres:// to connection string
 	postgresString := "postgres://"
 	connString := postgresString + connectionString
+
+	//opening connection
 	db, err := sql.Open(dbType, connString)
 	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query("SELECT * FROM pg_catalog.pg_tables where schemaname not in ('pg_catalog','information_schema');")
+
+	//setup query
+	rows, err := db.Query(DescribeDatabaseQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +47,7 @@ func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	if err != nil {
 		return nil, err
 	}
+
 	// Make a slice for the values
 	values := make([]interface{}, len(columns))
 
@@ -52,12 +58,16 @@ func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 		scanArgs[i] = &values[i]
 	}
 
+	//setup array of column descriptions
 	columnDesc := []substance.ColumnDescription{}
-	var subsInterface = pgsql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	//get database name
+	databaseName, err := substance.GetCurrentDatabaseName(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
+
+	//newColDesc to be added to columnDesc array
 	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, PropertyType: "Table"}
 
 	for rows.Next() {
@@ -93,34 +103,7 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 		return nil, err
 	}
 
-	rows, err := db.Query(`select
-		att.attrelid as "classId",
-		class.relname as "Table",
-		att.attname as "Field",
-		dsc.description as "description",
-		typ.typname as "Type",
-		att.attnum as "num",
-		att.attnotnull as "isNotNull",
-		att.atthasdef as "hasDefault"
-	  from
-		pg_catalog.pg_attribute as att
-		left join pg_catalog.pg_description as dsc on dsc.objoid = att.attrelid and dsc.objsubid = att.attnum
-		left join pg_type as typ on typ.oid = att.atttypid
-		left join pg_catalog.pg_class as class on class.oid = att.attrelid
-	  where
-		att.attrelid in (
-			select rel.oid as "id"
-			from pg_catalog.pg_class as rel
-			left join pg_catalog.pg_description as dsc on dsc.objoid = rel.oid and dsc.objsubid = 0
-			where 
-			class.relname = $1 and
-			rel.relpersistence in ('p') and
-			rel.relkind in ('r', 'v', 'm', 'c', 'f')
-		) and
-		att.attnum > 0 and
-		not att.attisdropped
-	  order by
-		att.attrelid, att.attnum;`, tableName)
+	rows, err := db.Query(DescribeTableQuery, tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -198,21 +181,7 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf(`select
-							tc.table_name as "table_name",
-							kcu.column_name as "column",
-							class.relname as "ref_table",
-							con.confkey as "ref_columnNum"
-							  from
-								pg_catalog.pg_constraint as con
-								left join information_schema.table_constraints as tc on tc.constraint_name = con.conname
-								left join information_schema.key_column_usage as kcu on kcu.constraint_name = con.conname
-								left join pg_catalog.pg_class as class on class.oid = con.confrelid
-							  where
-								tc.table_name = '%s' and
-								con.contype = 'f'
-							  	;`, tableName)
-	rows, err := db.Query(query)
+	rows, err := db.Query(DescribeTableRelationshipQuery, tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -280,18 +249,7 @@ func (m pgsql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query(`select distinct on (con.conrelid, con.conkey, con.confrelid, con.confkey)
-	tc.table_name,
-	kcu.column_name as "column",
-	contype
-  from
-	pg_catalog.pg_constraint as con
-	left join information_schema.table_constraints as tc on tc.constraint_name = con.conname
-	left join information_schema.key_column_usage as kcu on kcu.constraint_name = con.conname
-	left join pg_catalog.pg_class as class on class.oid = con.confrelid
-  where
-		tc.table_name = $1
-  ;`, tableName)
+	rows, err := db.Query(DescribeTableConstraintsQuery, tableName)
 	if err != nil {
 		return nil, err
 	}

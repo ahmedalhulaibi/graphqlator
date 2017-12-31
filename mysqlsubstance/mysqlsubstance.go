@@ -77,7 +77,7 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query("SHOW TABLES")
+	rows, err := db.Query(DescribeDatabaseQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf("DESCRIBE %s", tableName)
+	query := fmt.Sprintf(DescribeTableQuery, tableName)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -227,13 +227,7 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf(`SELECT 
-		TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME
-	  FROM
-		INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-	  WHERE
-		REFERENCED_TABLE_SCHEMA = '%s' AND
-		REFERENCED_TABLE_NAME = '%s';`, databaseName, tableName)
+	query := fmt.Sprintf(DescribeTableRelationshipQuery, databaseName, tableName)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -304,11 +298,7 @@ func (m mysql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf(`SELECT DISTINCT kcu.column_name as 'Column', tc.constraint_type as 'Constraint'
-		FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE as kcu
-		JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS as tc on tc.constraint_name = kcu.constraint_name
-		WHERE kcu.table_name = '%s'
-		order by kcu.column_name, tc.constraint_type;`, tableName)
+	query := fmt.Sprintf(DescribeTableConstraintsQuery, tableName)
 	rows, err := db.Query(query)
 
 	if err != nil {
