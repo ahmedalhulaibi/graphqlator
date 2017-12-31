@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	. "github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +26,7 @@ var describe = &cobra.Command{
 }
 
 func describeDatabase(dbType string, connectionString string) {
-	results, err := DescribeDatabase(dbType, connectionString)
+	results, err := substance.DescribeDatabase(dbType, connectionString)
 	if err != nil {
 		panic(err)
 	}
@@ -40,9 +40,9 @@ func describeDatabase(dbType string, connectionString string) {
 }
 
 func describleTable(dbType string, connectionString string, tableNames []string) {
-	tableDesc := []ColumnDescription{}
+	tableDesc := []substance.ColumnDescription{}
 	for _, tableName := range tableNames {
-		_results, _ := DescribeTable(dbType, connectionString, tableName)
+		_results, _ := substance.DescribeTable(dbType, connectionString, tableName)
 		tableDesc = append(tableDesc, _results...)
 	}
 	for _, colDesc := range tableDesc {
@@ -55,10 +55,10 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("------------------------")
 	}
 	fmt.Println("=====================")
-	relationshipDesc := []ColumnRelationship{}
+	relationshipDesc := []substance.ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, _ := DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, _ := substance.DescribeTableRelationship(dbType, connectionString, tableName)
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {
@@ -69,10 +69,10 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("Ref Col Name:\t", colRel.ReferenceColumnName)
 	}
 	fmt.Println("=====================")
-	contraintDesc := []ColumnConstraint{}
+	contraintDesc := []substance.ColumnConstraint{}
 
 	for _, tableName := range tableNames {
-		_results, _ := DescribeTableConstraints(dbType, connectionString, tableName)
+		_results, _ := substance.DescribeTableConstraints(dbType, connectionString, tableName)
 		contraintDesc = append(contraintDesc, _results...)
 	}
 	for _, colCon := range contraintDesc {

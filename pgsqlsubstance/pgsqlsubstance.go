@@ -149,7 +149,7 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, TableName: tableName}
 
 	//get all column constraints to determine key type
-	columnConstraints, err := getAllContraints(dbType, connectionString, tableName)
+	//columnConstraints, err := subsInterface.DescribeTableConstraintsFunc(dbType, connectionString, tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -198,24 +198,24 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query(`select distinct on (con.conrelid, con.conkey, con.confrelid, con.confkey)
-	tc.table_name,
-	kcu.column_name as "column",
-	class.relname as "ref_table",
-	con.confkey as "ref_columnNum"
-  from
-	pg_catalog.pg_constraint as con
-	left join information_schema.table_constraints as tc on tc.constraint_name = con.conname
-	left join information_schema.key_column_usage as kcu on kcu.constraint_name = con.conname
-	left join pg_catalog.pg_class as class on class.oid = con.confrelid
-  where
-		tc.table_name = $1 and
-		con.contype = 'f'
-  ;`, tableName)
+	query := fmt.Sprintf(`select
+							tc.table_name as "table_name",
+							kcu.column_name as "column",
+							class.relname as "ref_table",
+							con.confkey as "ref_columnNum"
+							  from
+								pg_catalog.pg_constraint as con
+								left join information_schema.table_constraints as tc on tc.constraint_name = con.conname
+								left join information_schema.key_column_usage as kcu on kcu.constraint_name = con.conname
+								left join pg_catalog.pg_class as class on class.oid = con.confrelid
+							  where
+								tc.table_name = '%s' and
+								con.contype = 'f'
+							  	;`, tableName)
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
-
 	// Get column names
 	columns, err := rows.Columns()
 	if err != nil {
@@ -233,7 +233,7 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 
 	columnDesc := []substance.ColumnRelationship{}
 	newColDesc := substance.ColumnRelationship{}
-
+	//newColDesc.TableName = tableName
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		if err != nil {
@@ -242,15 +242,20 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 
 		// Print data
 		for i, value := range values {
+			//fmt.Printf("DescribeTableRelationshipFunc Value %T ", value)
 			switch value.(type) {
+			case string:
+				fmt.Println("\t", columns[i], ": ", value)
+				switch columns[i] {
+				case "table_name":
+					newColDesc.TableName = string(value.(string))
+				case "column":
+					newColDesc.ColumnName = string(value.(string))
+				}
 			case []byte:
 				fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
 				switch columns[i] {
-				case "table_name":
-					newColDesc.TableName = string(value.([]byte))
-				case "column":
-					newColDesc.ColumnName = string(value.([]byte))
 				case "ref_table":
 					newColDesc.ReferenceTableName = string(value.([]byte))
 				case "ref_columnNum":
@@ -263,15 +268,7 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	return columnDesc, nil
 }
 
-type columnConstraint struct {
-	TableName           string
-	ColumnName          string
-	ReferenceTableName  string
-	ReferenceColumnName string
-	KeyType             string
-}
-
-func getAllContraints(dbType string, connectionString string, tableName string) ([]columnConstraint, error) {
+func (m pgsql) DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnConstraint, error) {
 	postgresString := "postgres://"
 	connString := postgresString + connectionString
 	db, err := sql.Open(dbType, connString)
@@ -286,8 +283,7 @@ func getAllContraints(dbType string, connectionString string, tableName string) 
 	rows, err := db.Query(`select distinct on (con.conrelid, con.conkey, con.confrelid, con.confkey)
 	tc.table_name,
 	kcu.column_name as "column",
-	class.relname as "ref_table",
-	con.confkey as "ref_columnNum"
+	contype
   from
 	pg_catalog.pg_constraint as con
 	left join information_schema.table_constraints as tc on tc.constraint_name = con.conname
@@ -315,8 +311,8 @@ func getAllContraints(dbType string, connectionString string, tableName string) 
 		scanArgs[i] = &values[i]
 	}
 
-	columnDesc := []columnConstraint{}
-	newColDesc := columnConstraint{}
+	columnDesc := []substance.ColumnConstraint{}
+	newColDesc := substance.ColumnConstraint{}
 
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
@@ -327,20 +323,16 @@ func getAllContraints(dbType string, connectionString string, tableName string) 
 		// Print data
 		for i, value := range values {
 			switch value.(type) {
-			case []byte:
-				fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
+			case string:
+				//fmt.Println("\t", columns[i], ": ", string(value.(string)))
 
 				switch columns[i] {
 				case "table_name":
-					newColDesc.TableName = string(value.([]byte))
+					newColDesc.TableName = string(value.(string))
 				case "column":
-					newColDesc.ColumnName = string(value.([]byte))
-				case "ref_table":
-					newColDesc.ReferenceTableName = string(value.([]byte))
-				case "ref_columnNum":
-					newColDesc.ReferenceColumnName = string(value.([]byte))
+					newColDesc.ColumnName = string(value.(string))
 				case "contype":
-					newColDesc.KeyType = string(value.([]byte))
+					newColDesc.ConstraintType = string(value.(string))
 				}
 			default:
 				//fmt.Println("\t", columns[i], ": ", value)
