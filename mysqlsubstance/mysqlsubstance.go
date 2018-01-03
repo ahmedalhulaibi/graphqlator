@@ -98,8 +98,8 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	}
 
 	columnDesc := []substance.ColumnDescription{}
-	var subsInterface = mysql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := m.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -166,8 +166,8 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	}
 
 	columnDesc := []substance.ColumnDescription{}
-	var subsInterface = mysql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := m.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -222,8 +222,8 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	subsInterface := mysql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := m.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}

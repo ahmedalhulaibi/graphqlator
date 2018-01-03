@@ -58,7 +58,7 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 	for _, colDesc := range tableDesc {
 		propertyType := ""
 		switch {
-		case strings.Contains(colDesc.PropertyType, "tinyint(4)"):
+		case strings.Contains(colDesc.PropertyType, "tinyint(1)") || strings.Contains(colDesc.PropertyType, "bit"):
 			propertyType = "Boolean"
 			break
 		case strings.Contains(colDesc.PropertyType, "varchar"):
@@ -106,10 +106,20 @@ func generateGqlSchema(dbType string, connectionString string, tableNames []stri
 
 		This code creates a Persons relationship for Orders, and removes the PersonID reference
 		*/
-		newGqlObjProperty := gqlObjectProperty{scalarName: colRel.ReferenceTableName, scalarType: colRel.ReferenceTableName, nullable: gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].nullable, keyType: gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType}
+		newGqlObjProperty := gqlObjectProperty{
+			scalarName: colRel.ReferenceTableName,
+			scalarType: colRel.ReferenceTableName,
+			nullable:   gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].nullable,
+			keyType:    gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType}
+
 		gqlObjectTypes[colRel.TableName].properties[colRel.ReferenceTableName] = newGqlObjProperty
+
 		if gqlObjectTypes[colRel.TableName].properties[colRel.ColumnName].keyType == "MUL" {
-			newGqlObjProperty := gqlObjectProperty{scalarName: colRel.TableName, scalarType: colRel.TableName, nullable: true, isList: true}
+			newGqlObjProperty := gqlObjectProperty{
+				scalarName: colRel.TableName,
+				scalarType: colRel.TableName,
+				nullable:   true,
+				isList:     true}
 			gqlObjectTypes[colRel.ReferenceTableName].properties[colRel.TableName] = newGqlObjProperty
 		}
 		//remove old property

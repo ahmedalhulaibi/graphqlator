@@ -17,14 +17,14 @@ type pgsql struct {
 }
 
 /*GetCurrentDatabaseName returns currrent database schema name as string*/
-func (m pgsql) GetCurrentDatabaseNameFunc(dbType string, connectionString string) (string, error) {
+func (p pgsql) GetCurrentDatabaseNameFunc(dbType string, connectionString string) (string, error) {
 	returnValue := "postgres"
 	var err error
 	return returnValue, err
 }
 
 /*DescribeDatabase returns tables in database*/
-func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]substance.ColumnDescription, error) {
+func (p pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]substance.ColumnDescription, error) {
 	//prepend postgres:// to connection string
 	postgresString := "postgres://"
 	connString := postgresString + connectionString
@@ -94,7 +94,7 @@ func (m pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 }
 
 /*DescribeTable returns columns in database*/
-func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnDescription, error) {
+func (p pgsql) DescribeTableFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnDescription, error) {
 	postgresString := "postgres://"
 	connString := postgresString + connectionString
 	db, err := sql.Open(dbType, connString)
@@ -124,8 +124,8 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	}
 
 	columnDesc := []substance.ColumnDescription{}
-	var subsInterface = pgsql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := p.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (m pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 }
 
 /*DescribeTableRelationship returns all foreign column references in database table*/
-func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnRelationship, error) {
+func (p pgsql) DescribeTableRelationshipFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnRelationship, error) {
 	postgresString := "postgres://"
 	connString := postgresString + connectionString
 	db, err := sql.Open(dbType, connString)
@@ -237,7 +237,7 @@ func (m pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	return columnDesc, nil
 }
 
-func (m pgsql) DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnConstraint, error) {
+func (p pgsql) DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnConstraint, error) {
 	postgresString := "postgres://"
 	connString := postgresString + connectionString
 	db, err := sql.Open(dbType, connString)
