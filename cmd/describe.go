@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	. "github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 	"github.com/spf13/cobra"
 )
 
@@ -17,12 +17,6 @@ var describe = &cobra.Command{
 	Long:  `List database tables or describe columns of table(s). If no table names given, it will list tables in database. If table names supplied, the columns of the tables will be described.`,
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//fmt.Println(args)
-		switch args[0] {
-		case "mariadb":
-			args[0] = "mysql"
-			break
-		}
 		if len(args) > 2 {
 			describleTable(args[0], args[1], args[2:len(args)])
 		} else {
@@ -32,7 +26,7 @@ var describe = &cobra.Command{
 }
 
 func describeDatabase(dbType string, connectionString string) {
-	results, err := DescribeDatabase(dbType, connectionString)
+	results, err := substance.DescribeDatabase(dbType, connectionString)
 	if err != nil {
 		panic(err)
 	}
@@ -46,9 +40,9 @@ func describeDatabase(dbType string, connectionString string) {
 }
 
 func describleTable(dbType string, connectionString string, tableNames []string) {
-	tableDesc := []ColumnDescription{}
+	tableDesc := []substance.ColumnDescription{}
 	for _, tableName := range tableNames {
-		_results, _ := DescribeTable(dbType, connectionString, tableName)
+		_results, _ := substance.DescribeTable(dbType, connectionString, tableName)
 		tableDesc = append(tableDesc, _results...)
 	}
 	for _, colDesc := range tableDesc {
@@ -61,10 +55,10 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("------------------------")
 	}
 	fmt.Println("=====================")
-	relationshipDesc := []ColumnRelationship{}
+	relationshipDesc := []substance.ColumnRelationship{}
 
 	for _, tableName := range tableNames {
-		_results, _ := DescribeTableRelationship(dbType, connectionString, tableName)
+		_results, _ := substance.DescribeTableRelationship(dbType, connectionString, tableName)
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {
@@ -73,6 +67,19 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		fmt.Println("Column Name:\t", colRel.ColumnName)
 		fmt.Println("Ref Table Name:\t", colRel.ReferenceTableName)
 		fmt.Println("Ref Col Name:\t", colRel.ReferenceColumnName)
+	}
+	fmt.Println("=====================")
+	contraintDesc := []substance.ColumnConstraint{}
+
+	for _, tableName := range tableNames {
+		_results, _ := substance.DescribeTableConstraints(dbType, connectionString, tableName)
+		contraintDesc = append(contraintDesc, _results...)
+	}
+	for _, colCon := range contraintDesc {
+		fmt.Println(colCon)
+		fmt.Println("Table Name:\t", colCon.TableName)
+		fmt.Println("Column Name:\t", colCon.ColumnName)
+		fmt.Println("Constraint:\t", colCon.ConstraintType)
 	}
 	fmt.Println("=====================")
 }

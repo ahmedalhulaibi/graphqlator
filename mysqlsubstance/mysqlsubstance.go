@@ -10,7 +10,6 @@ import (
 func init() {
 	mysqlPlugin := mysql{}
 	substance.Register("mysql", &mysqlPlugin)
-	substance.Register("mariadb", &mysqlPlugin)
 }
 
 type mysql struct {
@@ -24,8 +23,7 @@ func (m mysql) GetCurrentDatabaseNameFunc(dbType string, connectionString string
 	if err != nil {
 		return "nil", err
 	}
-	query := "SELECT DATABASE()"
-	rows, err := db.Query(query)
+	rows, err := db.Query("SELECT DATABASE()")
 	if err != nil {
 		return "nil", err
 	}
@@ -79,7 +77,7 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query("SHOW TABLES")
+	rows, err := db.Query(DescribeDatabaseQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -100,8 +98,8 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	}
 
 	columnDesc := []substance.ColumnDescription{}
-	var subsInterface = mysql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := m.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +144,7 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf("DESCRIBE %s", tableName)
+	query := fmt.Sprintf(DescribeTableQuery, tableName)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -168,8 +166,8 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	}
 
 	columnDesc := []substance.ColumnDescription{}
-	var subsInterface = mysql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := m.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +196,7 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 				case "Type":
 					newColDesc.PropertyType = string(value.([]byte))
 				case "Key":
-					newColDesc.KeyType = string(value.([]byte))
+					//newColDesc.KeyType = string(value.([]byte))
 				case "Null":
 					if string(value.([]byte)) == "YES" {
 						newColDesc.Nullable = true
@@ -224,18 +222,12 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	subsInterface := mysql{}
-	databaseName, err := subsInterface.GetCurrentDatabaseNameFunc(dbType, connectionString)
+
+	databaseName, err := m.GetCurrentDatabaseNameFunc(dbType, connectionString)
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf(`SELECT 
-		TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME
-	  FROM
-		INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-	  WHERE
-		REFERENCED_TABLE_SCHEMA = '%s' AND
-		REFERENCED_TABLE_NAME = '%s';`, databaseName, tableName)
+	query := fmt.Sprintf(DescribeTableRelationshipQuery, databaseName, tableName)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -287,6 +279,67 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 				}
 			default:
 				//fmt.Println("\t", columns[i], ": ", value)
+			}
+		}
+		columnDesc = append(columnDesc, newColDesc)
+		//fmt.Println("-----------------------------------")
+	}
+	return columnDesc, nil
+}
+
+/*DescribeTableRelationship returns all foreign column references in database table*/
+func (m mysql) DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnConstraint, error) {
+	db, err := sql.Open(dbType, connectionString)
+	defer db.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	query := fmt.Sprintf(DescribeTableConstraintsQuery, tableName)
+	rows, err := db.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	// Make a slice for the values
+	values := make([]interface{}, len(columns))
+
+	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
+	// references into such a slice
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	columnDesc := []substance.ColumnConstraint{}
+	newColDesc := substance.ColumnConstraint{}
+
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		// Print data
+		for i, value := range values {
+			newColDesc.TableName = tableName
+			switch value.(type) {
+			case []byte:
+				switch columns[i] {
+				case "Column":
+					newColDesc.ColumnName = string(value.([]byte))
+				case "Constraint":
+					newColDesc.ConstraintType = string(value.([]byte))
+				}
 			}
 		}
 		columnDesc = append(columnDesc, newColDesc)
