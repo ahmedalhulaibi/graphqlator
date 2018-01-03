@@ -9,8 +9,7 @@ Supported Data Stores:
 
 - mysql
 - mariadb
-- postgres __*WIP*__
-- mongoDB __*PLANNED*__
+- postgres
 
 
 Usage:
@@ -29,3 +28,14 @@ Flags:
   -h, --help   help for graphqlator
 
 Use "graphqlator [command] --help" for more information about a command.
+
+Example Usage:
+```
+graphqlator describe mysql "username:password@tcp(localhost:3306)/schema" OrdersTable PersonsTable AntiOrdersTable
+
+graphqlator generate mysql "username:password@tcp(localhost:3306)/schema" OrdersTable PersonsTable AntiOrdersTable
+
+graphqlator describe postgres "username:password@localhost:5432/postgres" orders persons antiorders
+
+graphqlator generate postgres "username:password@localhost:5432/postgres" orders persons antiorders
+```
