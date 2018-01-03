@@ -196,7 +196,7 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 				case "Type":
 					newColDesc.PropertyType = string(value.([]byte))
 				case "Key":
-					newColDesc.KeyType = string(value.([]byte))
+					//newColDesc.KeyType = string(value.([]byte))
 				case "Null":
 					if string(value.([]byte)) == "YES" {
 						newColDesc.Nullable = true

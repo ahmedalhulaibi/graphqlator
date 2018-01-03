@@ -3,6 +3,8 @@ package pgsqlsubstance
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 )
@@ -133,9 +135,9 @@ func (p pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 
 	//get all column constraints to determine key type
 	//columnConstraints, err := subsInterface.DescribeTableConstraintsFunc(dbType, connectionString, tableName)
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
@@ -146,19 +148,17 @@ func (p pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 		// Print data
 		for i, value := range values {
 			switch value.(type) {
+			case bool:
+				switch columns[i] {
+				case "isNotNull":
+					newColDesc.Nullable = !value.(bool)
+				}
 			case []byte:
-
 				switch columns[i] {
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
 					newColDesc.PropertyType = string(value.([]byte))
-				case "isNotNull":
-					if string(value.([]byte)) == "f" {
-						newColDesc.Nullable = true
-					} else {
-						newColDesc.Nullable = false
-					}
 				}
 			}
 		}
@@ -200,6 +200,10 @@ func (p pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 		scanArgs[i] = &values[i]
 	}
 
+	columnTableDesc, err := substance.DescribeTable(dbType, connectionString, tableName)
+	if err != nil {
+		return nil, err
+	}
 	columnDesc := []substance.ColumnRelationship{}
 	newColDesc := substance.ColumnRelationship{}
 	//newColDesc.TableName = tableName
@@ -227,8 +231,23 @@ func (p pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 				switch columns[i] {
 				case "ref_table":
 					newColDesc.ReferenceTableName = string(value.([]byte))
+					columnTableDesc, err = substance.DescribeTable(dbType, connectionString, newColDesc.ReferenceTableName)
+					if err != nil {
+						return nil, err
+					}
 				case "ref_columnNum":
-					newColDesc.ReferenceColumnName = string(value.([]byte))
+					//this gets returned as {1} a reference to the column number in the table
+					//this has to be replaced with the column name
+
+					refColumnNumStr := strings.Replace(strings.Replace(string(value.([]byte)), "{", "", -1), "}", "", -1)
+
+					refColumnNum, err := strconv.Atoi(refColumnNumStr)
+					if err != nil {
+						return nil, err
+					}
+
+					newColDesc.ReferenceColumnName = columnTableDesc[refColumnNum-1].PropertyName
+
 				}
 			}
 		}

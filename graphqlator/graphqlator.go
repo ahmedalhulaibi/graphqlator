@@ -2,9 +2,9 @@ package graphqlator
 
 /*GraphqlatorInterface placeholder comment */
 type GraphqlatorInterface interface {
-	GetGqlObjectTypesFunc(dbType string, connectionString string, tableNames []string) []GqlObjectType
-	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjects []GqlObjectType) []GqlObjectType
-	OutputCodeFunc([]GqlObjectType)
+	GetGqlObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GqlObjectType
+	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjects map[string]GqlObjectType) map[string]GqlObjectType
+	OutputCodeFunc(map[string]GqlObjectType)
 }
 
 var graphqlatorPlugins = make(map[string]GraphqlatorInterface)

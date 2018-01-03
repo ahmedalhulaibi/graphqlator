@@ -39,7 +39,7 @@ att.attrelid,
 att.attnum;`
 
 /*DescribeTableRelationshipQuery used in DescribeTableRelationshipFunc*/
-var DescribeTableRelationshipQuery string = `select
+var DescribeTableRelationshipQuery string = `select 
 tc.table_name as "table_name",
 kcu.column_name as "column",
 class.relname as "ref_table",
