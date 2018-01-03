@@ -1,5 +1,5 @@
 # Graphqlator CLI
-__*This project is a WIP. The end goal is to generate source for a static graphql server*__
+__*This project is a WIP. The end goal is to generate source for a graphql server*__
 
 Graphqlator helps you generate a GraphQL type schema. Type 'graphqlator help' to see usage.
 
