@@ -1,16 +1,16 @@
-package graphqlator
+package substancegen
 
 /*GraphqlatorInterface placeholder comment */
-type GraphqlatorInterface interface {
-	GetGqlObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GqlObjectType
+type SubstanceGenInterface interface {
+	GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GqlObjectType
 	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjects map[string]GqlObjectType) map[string]GqlObjectType
 	OutputCodeFunc(map[string]GqlObjectType)
 }
 
-var graphqlatorPlugins = make(map[string]GraphqlatorInterface)
+var graphqlatorPlugins = make(map[string]SubstanceGenInterface)
 
 /*Register placeholder comment */
-func Register(pluginName string, pluginInterface GraphqlatorInterface) {
+func Register(pluginName string, pluginInterface SubstanceGenInterface) {
 	graphqlatorPlugins[pluginName] = pluginInterface
 }
 
@@ -34,5 +34,5 @@ type GqlObjectType struct {
 
 /*Graphqlate placeholder comment */
 func Graphqlate(gqlType string, dbType string, connectionString string, tableNames []string) {
-	graphqlatorPlugins[gqlType].OutputCodeFunc(graphqlatorPlugins[gqlType].GetGqlObjectTypesFunc(dbType, connectionString, tableNames))
+	graphqlatorPlugins[gqlType].OutputCodeFunc(graphqlatorPlugins[gqlType].GetObjectTypesFunc(dbType, connectionString, tableNames))
 }

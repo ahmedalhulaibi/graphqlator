@@ -14,6 +14,7 @@ func init() {
 	substance.Register("postgres", &pgsqlPlugin)
 }
 
+
 type pgsql struct {
 	name string
 }
@@ -158,7 +159,7 @@ func (p pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
-					newColDesc.PropertyType = string(value.([]byte))
+					newColDesc.PropertyType, _ = p.GetGoDataType(string(value.([]byte)))
 				}
 			}
 		}
@@ -318,4 +319,11 @@ func (p pgsql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 		columnDesc = append(columnDesc, newColDesc)
 	}
 	return columnDesc, nil
+}
+
+
+func (p pgsql) GetGoDataType (sqlType string) (string, error) {
+	result := sqlType
+	//TODO: need to map postgres data types to go lang data types here
+	return result, nil
 }

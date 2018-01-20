@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	_ "github.com/ahmedalhulaibi/go-graphqlator-cli/gqlgraphqlator"
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/graphqlator"
+	_ "github.com/ahmedalhulaibi/go-graphqlator-cli/gqlschema"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/substancegen"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +41,7 @@ var generate = &cobra.Command{
 }
 
 func generateGqlSchema(dbType string, connectionString string, tableNames []string) {
-	graphqlator.Graphqlate("gql", dbType, connectionString, tableNames)
+	substancegen.Graphqlate("graphql-go", dbType, connectionString, tableNames)
 	// tableDesc := []substance.ColumnDescription{}
 	// gqlObjectTypes := make(map[string]gqlObjectType)
 	// for _, tableName := range tableNames {
