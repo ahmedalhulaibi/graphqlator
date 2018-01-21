@@ -350,7 +350,6 @@ func (m mysql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 }
 
 func (m mysql) GetGoDataType (sqlType string) (string, error) {
-	//TODO: need to map mysql data types to go lang data types here
 	for pattern, value := range regexDataTypePatterns {
 		match, err := regexp.MatchString(pattern,sqlType)
 		if match && err == nil {

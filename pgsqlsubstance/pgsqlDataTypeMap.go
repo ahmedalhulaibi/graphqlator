@@ -1,4 +1,4 @@
-package mysqlsubstance
+package pgsqlsubstance
 
 
 

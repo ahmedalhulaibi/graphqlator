@@ -2,7 +2,6 @@ package gqlgraphqlator
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substancegen"
@@ -39,26 +38,10 @@ func (g gql) GetObjectTypesFunc(dbType string, connectionString string, tableNam
 	}
 
 	//map types
-	//TODO: remove this mapping once substance supports go data types in the PropertyType field
 	for _, colDesc := range tableDesc {
-		propertyType := ""
-		switch {
-		case strings.Contains(colDesc.PropertyType, "tinyint(1)") || strings.Contains(colDesc.PropertyType, "bit"):
-			propertyType = "Boolean"
-			break
-		case strings.Contains(colDesc.PropertyType, "varchar"):
-			propertyType = "String"
-			break
-		case strings.Contains(colDesc.PropertyType, "int"):
-			propertyType = "Int"
-			break
-		case strings.Contains(colDesc.PropertyType, "double") || strings.Contains(colDesc.PropertyType, "float") || strings.Contains(colDesc.PropertyType, "decimal") || strings.Contains(colDesc.PropertyType, "numeric"):
-			propertyType = "Float"
-			break
-		}
 		newGqlObjProperty := substancegen.GqlObjectProperty{
 			ScalarName: colDesc.PropertyName,
-			ScalarType: propertyType,
+			ScalarType: colDesc.PropertyType,
 			Nullable:   colDesc.Nullable,
 			KeyType:    colDesc.KeyType}
 		gqlObjectTypes[colDesc.TableName].Properties[colDesc.PropertyName] = newGqlObjProperty
@@ -154,18 +137,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 		// 	FOREIGN KEY (PersonID) REFERENCES Persons(PersonID)
 		// );
 		//
-		//The above table would result in an Order object which has a Person object
 		//The Person object would have an array of Order objects to reflect the one-to-many relationship
-
-		//Replace column foreign key reference with the Object type (Order has a Person)
-		// newGqlObjProperty := substancegen.GqlObjectProperty{
-		// 	ScalarName: colRel.ReferenceTableName,
-		// 	ScalarType: colRel.ReferenceTableName,
-		// 	Nullable:   gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].Nullable,
-		// 	KeyType:    gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType}
-
-		// gqlObjectTypes[colRel.TableName].Properties[colRel.ReferenceTableName] = newGqlObjProperty
-
 		//Add a new property to table
 		//Persons have many orders
 		if gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType == "FOREIGN KEY" ||
@@ -184,9 +156,6 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 				IsList:     false}
 			gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = newGqlObjProperty
 		}
-		//remove old property
-		//delete(gqlObjectTypes[colRel.TableName].Properties, colRel.ColumnName)
-		//fmt.Println(gqlObjectTypes)
 	}
 
 	return gqlObjectTypes

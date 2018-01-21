@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
+	"regexp"
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 )
 
@@ -323,7 +323,14 @@ func (p pgsql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 
 
 func (p pgsql) GetGoDataType (sqlType string) (string, error) {
-	result := sqlType
-	//TODO: need to map postgres data types to go lang data types here
-	return result, nil
+	for pattern, value := range regexDataTypePatterns {
+		match, err := regexp.MatchString(pattern,sqlType)
+		if match && err == nil {
+			result := value
+			return result, nil
+		}
+	}
+	err := fmt.Errorf("No match found for data type %s", sqlType)
+	fmt.Println(err)
+	return sqlType, err
 }
