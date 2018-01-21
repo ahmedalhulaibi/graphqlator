@@ -158,13 +158,13 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 		//The Person object would have an array of Order objects to reflect the one-to-many relationship
 
 		//Replace column foreign key reference with the Object type (Order has a Person)
-		newGqlObjProperty := substancegen.GqlObjectProperty{
-			ScalarName: colRel.ReferenceTableName,
-			ScalarType: colRel.ReferenceTableName,
-			Nullable:   gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].Nullable,
-			KeyType:    gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType}
+		// newGqlObjProperty := substancegen.GqlObjectProperty{
+		// 	ScalarName: colRel.ReferenceTableName,
+		// 	ScalarType: colRel.ReferenceTableName,
+		// 	Nullable:   gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].Nullable,
+		// 	KeyType:    gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType}
 
-		gqlObjectTypes[colRel.TableName].Properties[colRel.ReferenceTableName] = newGqlObjProperty
+		// gqlObjectTypes[colRel.TableName].Properties[colRel.ReferenceTableName] = newGqlObjProperty
 
 		//Add a new property to table
 		//Persons have many orders
@@ -185,7 +185,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 			gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = newGqlObjProperty
 		}
 		//remove old property
-		delete(gqlObjectTypes[colRel.TableName].Properties, colRel.ColumnName)
+		//delete(gqlObjectTypes[colRel.TableName].Properties, colRel.ColumnName)
 		//fmt.Println(gqlObjectTypes)
 	}
 
