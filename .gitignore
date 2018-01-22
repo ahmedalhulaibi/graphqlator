@@ -1,4 +1,4 @@
 debug
 *.sql
 .vscode/
-tests.sh
+local*
