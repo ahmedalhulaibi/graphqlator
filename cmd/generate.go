@@ -41,5 +41,5 @@ var generate = &cobra.Command{
 }
 
 func generateGqlSchema(dbType string, connectionString string, tableNames []string) {
-	substancegen.Graphqlate("graphql-go", dbType, connectionString, tableNames)
+	substancegen.Generate("graphql-go", dbType, connectionString, tableNames)
 }

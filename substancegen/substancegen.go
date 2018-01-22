@@ -2,20 +2,20 @@ package substancegen
 
 /*GraphqlatorInterface placeholder comment */
 type SubstanceGenInterface interface {
-	GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GqlObjectType
-	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjects map[string]GqlObjectType) map[string]GqlObjectType
-	OutputCodeFunc(map[string]GqlObjectType)
+	GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GenObjectType
+	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, genObjects map[string]GenObjectType) map[string]GenObjectType
+	OutputCodeFunc(map[string]GenObjectType)
 }
 
-var graphqlatorPlugins = make(map[string]SubstanceGenInterface)
+var substanceGenPlugins = make(map[string]SubstanceGenInterface)
 
 /*Register placeholder comment */
 func Register(pluginName string, pluginInterface SubstanceGenInterface) {
-	graphqlatorPlugins[pluginName] = pluginInterface
+	substanceGenPlugins[pluginName] = pluginInterface
 }
 
-/*GqlObjectProperty placeholder comment */
-type GqlObjectProperty struct {
+/*GenObjectProperty placeholder comment */
+type GenObjectProperty struct {
 	ScalarName string
 	ScalarType string
 	IsList     bool
@@ -23,16 +23,16 @@ type GqlObjectProperty struct {
 	KeyType    string
 }
 
-/*GqlObjectProperties placeholder comment */
-type GqlObjectProperties map[string]GqlObjectProperty
+/*GenObjectProperties placeholder comment */
+type GenObjectProperties map[string]GenObjectProperty
 
-/*GqlObjectType placeholder comment */
-type GqlObjectType struct {
+/*GenObjectType placeholder comment */
+type GenObjectType struct {
 	Name       string
-	Properties GqlObjectProperties
+	Properties GenObjectProperties
 }
 
-/*Graphqlate placeholder comment */
-func Graphqlate(gqlType string, dbType string, connectionString string, tableNames []string) {
-	graphqlatorPlugins[gqlType].OutputCodeFunc(graphqlatorPlugins[gqlType].GetObjectTypesFunc(dbType, connectionString, tableNames))
+/*Generate placeholder comment */
+func Generate(generatorName string, dbType string, connectionString string, tableNames []string) {
+	substanceGenPlugins[generatorName].OutputCodeFunc(substanceGenPlugins[generatorName].GetObjectTypesFunc(dbType, connectionString, tableNames))
 }
