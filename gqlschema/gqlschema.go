@@ -2,32 +2,31 @@ package gqlgraphqlator
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/graphqlator"
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
+	"github.com/ahmedalhulaibi/go-graphqlator-cli/substancegen"
 )
 
 func init() {
 	gqlPlugin := gql{}
-	graphqlator.Register("gql", gqlPlugin)
+	substancegen.Register("graphql-go", gqlPlugin)
 }
 
 type gql struct {
 	name string
 }
 
-func (g gql) GetGqlObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]graphqlator.GqlObjectType {
+func (g gql) GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]substancegen.GqlObjectType {
 	//init array of column descriptions for all tables
 	tableDesc := []substance.ColumnDescription{}
 
 	//init array of graphql types
-	gqlObjectTypes := make(map[string]graphqlator.GqlObjectType)
+	gqlObjectTypes := make(map[string]substancegen.GqlObjectType)
 
 	//for each table name add a new graphql type and init its properties
 	for _, tableName := range tableNames {
-		newGqlObj := graphqlator.GqlObjectType{Name: tableName}
-		newGqlObj.Properties = make(graphqlator.GqlObjectProperties)
+		newGqlObj := substancegen.GqlObjectType{Name: tableName}
+		newGqlObj.Properties = make(substancegen.GqlObjectProperties)
 		gqlObjectTypes[tableName] = newGqlObj
 		//describe each table
 		_results, err := substance.DescribeTable(dbType, connectionString, tableName)
@@ -40,24 +39,9 @@ func (g gql) GetGqlObjectTypesFunc(dbType string, connectionString string, table
 
 	//map types
 	for _, colDesc := range tableDesc {
-		propertyType := ""
-		switch {
-		case strings.Contains(colDesc.PropertyType, "tinyint(1)") || strings.Contains(colDesc.PropertyType, "bit"):
-			propertyType = "Boolean"
-			break
-		case strings.Contains(colDesc.PropertyType, "varchar"):
-			propertyType = "String"
-			break
-		case strings.Contains(colDesc.PropertyType, "int"):
-			propertyType = "Int"
-			break
-		case strings.Contains(colDesc.PropertyType, "double") || strings.Contains(colDesc.PropertyType, "float") || strings.Contains(colDesc.PropertyType, "decimal") || strings.Contains(colDesc.PropertyType, "numeric"):
-			propertyType = "Float"
-			break
-		}
-		newGqlObjProperty := graphqlator.GqlObjectProperty{
+		newGqlObjProperty := substancegen.GqlObjectProperty{
 			ScalarName: colDesc.PropertyName,
-			ScalarType: propertyType,
+			ScalarType: colDesc.PropertyType,
 			Nullable:   colDesc.Nullable,
 			KeyType:    colDesc.KeyType}
 		gqlObjectTypes[colDesc.TableName].Properties[colDesc.PropertyName] = newGqlObjProperty
@@ -71,7 +55,7 @@ func (g gql) GetGqlObjectTypesFunc(dbType string, connectionString string, table
 	return gqlObjectTypes
 }
 
-func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjectTypes map[string]graphqlator.GqlObjectType) map[string]graphqlator.GqlObjectType {
+func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjectTypes map[string]substancegen.GqlObjectType) map[string]substancegen.GqlObjectType {
 	relationshipDesc := []substance.ColumnRelationship{}
 	constraintDesc := []substance.ColumnConstraint{}
 
@@ -95,7 +79,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 			fmt.Println("GQL Key Type ", constraint.TableName, constraint.ColumnName, gqlKeyType)
 			switch {
 			case gqlKeyType == "":
-				newGqlObjProperty := graphqlator.GqlObjectProperty{
+				newGqlObjProperty := substancegen.GqlObjectProperty{
 					ScalarName: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarName,
 					ScalarType: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarType,
 					Nullable:   gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].Nullable,
@@ -103,7 +87,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 				gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName] = newGqlObjProperty
 			case gqlKeyType == "p" || gqlKeyType == "PRIMARY KEY":
 				if constraint.ConstraintType == "f" || constraint.ConstraintType == "FOREIGN KEY" {
-					newGqlObjProperty := graphqlator.GqlObjectProperty{
+					newGqlObjProperty := substancegen.GqlObjectProperty{
 						ScalarName: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarName,
 						ScalarType: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarType,
 						Nullable:   gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].Nullable,
@@ -112,7 +96,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 				}
 			case gqlKeyType == "u" || gqlKeyType == "UNIQUE":
 				if constraint.ConstraintType == "f" || constraint.ConstraintType == "FOREIGN KEY" {
-					newGqlObjProperty := graphqlator.GqlObjectProperty{
+					newGqlObjProperty := substancegen.GqlObjectProperty{
 						ScalarName: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarName,
 						ScalarType: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarType,
 						Nullable:   gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].Nullable,
@@ -121,7 +105,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 				}
 			case gqlKeyType == "f" || gqlKeyType == "FOREIGN KEY":
 				if constraint.ConstraintType == "p" || constraint.ConstraintType == "PRIMARY KEY" || constraint.ConstraintType == "u" || constraint.ConstraintType == "UNIQUE" {
-					newGqlObjProperty := graphqlator.GqlObjectProperty{
+					newGqlObjProperty := substancegen.GqlObjectProperty{
 						ScalarName: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarName,
 						ScalarType: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarType,
 						Nullable:   gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].Nullable,
@@ -153,45 +137,31 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 		// 	FOREIGN KEY (PersonID) REFERENCES Persons(PersonID)
 		// );
 		//
-		//The above table would result in an Order object which has a Person object
 		//The Person object would have an array of Order objects to reflect the one-to-many relationship
-
-		//Replace column foreign key reference with the Object type (Order has a Person)
-		newGqlObjProperty := graphqlator.GqlObjectProperty{
-			ScalarName: colRel.ReferenceTableName,
-			ScalarType: colRel.ReferenceTableName,
-			Nullable:   gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].Nullable,
-			KeyType:    gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType}
-
-		gqlObjectTypes[colRel.TableName].Properties[colRel.ReferenceTableName] = newGqlObjProperty
-
 		//Add a new property to table
 		//Persons have many orders
 		if gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType == "FOREIGN KEY" ||
 			gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType == "f" {
-			newGqlObjProperty := graphqlator.GqlObjectProperty{
+			newGqlObjProperty := substancegen.GqlObjectProperty{
 				ScalarName: colRel.TableName,
 				ScalarType: colRel.TableName,
 				Nullable:   true,
 				IsList:     true}
 			gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = newGqlObjProperty
 		} else if gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType == "UFO" {
-			newGqlObjProperty := graphqlator.GqlObjectProperty{
+			newGqlObjProperty := substancegen.GqlObjectProperty{
 				ScalarName: colRel.TableName,
 				ScalarType: colRel.TableName,
 				Nullable:   true,
 				IsList:     false}
 			gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = newGqlObjProperty
 		}
-		//remove old property
-		delete(gqlObjectTypes[colRel.TableName].Properties, colRel.ColumnName)
-		//fmt.Println(gqlObjectTypes)
 	}
 
 	return gqlObjectTypes
 }
 
-func (g gql) OutputCodeFunc(gqlObjectTypes map[string]graphqlator.GqlObjectType) {
+func (g gql) OutputCodeFunc(gqlObjectTypes map[string]substancegen.GqlObjectType) {
 
 	//print schema
 	for _, value := range gqlObjectTypes {

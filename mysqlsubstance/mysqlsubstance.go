@@ -1,6 +1,7 @@
 package mysqlsubstance
 
 import (
+	"regexp"
 	"database/sql"
 	"fmt"
 
@@ -194,7 +195,7 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
-					newColDesc.PropertyType = string(value.([]byte))
+					newColDesc.PropertyType, _ = m.GetGoDataType(string(value.([]byte)))
 				case "Key":
 					//newColDesc.KeyType = string(value.([]byte))
 				case "Null":
@@ -346,4 +347,17 @@ func (m mysql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 		//fmt.Println("-----------------------------------")
 	}
 	return columnDesc, nil
+}
+
+func (m mysql) GetGoDataType (sqlType string) (string, error) {
+	for pattern, value := range regexDataTypePatterns {
+		match, err := regexp.MatchString(pattern,sqlType)
+		if match && err == nil {
+			result := value
+			return result, nil
+		}
+	}
+	err := fmt.Errorf("No match found for data type %s", sqlType)
+	fmt.Println(err)
+	return sqlType, err
 }

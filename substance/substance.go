@@ -7,6 +7,7 @@ type SubstanceInterface interface {
 	DescribeTableFunc(dbType string, connectionString string, tableName string) ([]ColumnDescription, error)
 	DescribeTableRelationshipFunc(dbType string, connectionString string, tableName string) ([]ColumnRelationship, error)
 	DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]ColumnConstraint, error)
+	GetGoDataType(sqlType string) (string, error)
 }
 
 /*substance plugin map*/

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
+	"regexp"
 	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
 )
 
@@ -13,6 +13,7 @@ func init() {
 	pgsqlPlugin := pgsql{}
 	substance.Register("postgres", &pgsqlPlugin)
 }
+
 
 type pgsql struct {
 	name string
@@ -158,7 +159,7 @@ func (p pgsql) DescribeTableFunc(dbType string, connectionString string, tableNa
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
-					newColDesc.PropertyType = string(value.([]byte))
+					newColDesc.PropertyType, _ = p.GetGoDataType(string(value.([]byte)))
 				}
 			}
 		}
@@ -318,4 +319,18 @@ func (p pgsql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 		columnDesc = append(columnDesc, newColDesc)
 	}
 	return columnDesc, nil
+}
+
+
+func (p pgsql) GetGoDataType (sqlType string) (string, error) {
+	for pattern, value := range regexDataTypePatterns {
+		match, err := regexp.MatchString(pattern,sqlType)
+		if match && err == nil {
+			result := value
+			return result, nil
+		}
+	}
+	err := fmt.Errorf("No match found for data type %s", sqlType)
+	fmt.Println(err)
+	return sqlType, err
 }
