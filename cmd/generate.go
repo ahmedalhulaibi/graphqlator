@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	_ "github.com/ahmedalhulaibi/go-graphqlator-cli/gqlschema"
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/substancegen"
+	_ "github.com/ahmedalhulaibi/substance/substancegen/generators/gqlschema"
+	"github.com/ahmedalhulaibi/substance/substancegen"
 	"github.com/spf13/cobra"
 )
 
@@ -10,20 +10,6 @@ func init() {
 	RootCmd.AddCommand(generate)
 }
 
-type gqlObjectProperty struct {
-	scalarName string
-	scalarType string
-	isList     bool
-	nullable   bool
-	keyType    string
-}
-
-type gqlObjectProperties map[string]gqlObjectProperty
-
-type gqlObjectType struct {
-	name       string
-	properties gqlObjectProperties
-}
 
 var generate = &cobra.Command{
 	Use:   "generate [database type] [connection string] [table names...]",

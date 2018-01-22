@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/substance"
+	"github.com/ahmedalhulaibi/substance"
 	"github.com/spf13/cobra"
 )
 
