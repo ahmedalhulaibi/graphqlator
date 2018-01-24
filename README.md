@@ -11,6 +11,9 @@ Supported Data Stores:
 - mariadb
 - postgres
 
+Install:
+
+Download prebuilt binaries from the [releases page](https://github.com/ahmedalhulaibi/go-graphqlator-cli/releases)
 
 Usage:
 ```
