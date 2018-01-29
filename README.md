@@ -45,5 +45,7 @@ graphqlator generate postgres "postgres://username:password@localhost:5432/postg
 
 # External Libraries
 [Substance](https://github.com/ahmedalhulaibi/substance) - This library is used to introspect on the database information schema and generate the graphql-go code.
+
 [grahpql-go](https://github.com/graphql-go/graphql) - The generated code is using this implementation of GraphQL in Go.
+
 [GORM](https://github.com/jinzhu/gorm) - The generated code is using GORM.
