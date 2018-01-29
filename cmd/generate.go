@@ -1,15 +1,14 @@
 package cmd
 
 import (
-	_ "github.com/ahmedalhulaibi/substance/substancegen/generators/gqlschema"
 	"github.com/ahmedalhulaibi/substance/substancegen"
+	_ "github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	RootCmd.AddCommand(generate)
 }
-
 
 var generate = &cobra.Command{
 	Use:   "generate [database type] [connection string] [table names...]",
