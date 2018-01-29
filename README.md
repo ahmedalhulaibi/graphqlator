@@ -1,5 +1,5 @@
 # Graphqlator CLI
-__*This project is a WIP. The end goal is to generate source for a graphql server*__
+__*This project is a WIP.*__
 
 Graphqlator takes your existing database schema and generates code for a GraphQL-Go server. Type 'graphqlator help' to see usage.
 
