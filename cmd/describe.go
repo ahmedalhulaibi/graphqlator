@@ -62,7 +62,7 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		relationshipDesc = append(relationshipDesc, _results...)
 	}
 	for _, colRel := range relationshipDesc {
-		fmt.Println(colRel)
+		//fmt.Println(colRel)
 		fmt.Println("Table Name:\t", colRel.TableName)
 		fmt.Println("Column Name:\t", colRel.ColumnName)
 		fmt.Println("Ref Table Name:\t", colRel.ReferenceTableName)
@@ -76,7 +76,7 @@ func describleTable(dbType string, connectionString string, tableNames []string)
 		contraintDesc = append(contraintDesc, _results...)
 	}
 	for _, colCon := range contraintDesc {
-		fmt.Println(colCon)
+		//fmt.Println(colCon)
 		fmt.Println("Table Name:\t", colCon.TableName)
 		fmt.Println("Column Name:\t", colCon.ColumnName)
 		fmt.Println("Constraint:\t", colCon.ConstraintType)

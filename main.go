@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/ahmedalhulaibi/substance/providers/mysqlsubstance"
 	_ "github.com/ahmedalhulaibi/substance/providers/pgsqlsubstance"
+	_ "github.com/ahmedalhulaibi/substance/providers/testsubstance"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
