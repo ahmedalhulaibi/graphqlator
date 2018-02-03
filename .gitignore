@@ -2,3 +2,4 @@ debug
 *.sql
 .vscode/
 local*
+build-bin.sh

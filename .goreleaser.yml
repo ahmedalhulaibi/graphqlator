@@ -1,0 +1,10 @@
+# .goreleaser.yml
+# Build customization
+builds:
+  - binary: graphqlator
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
