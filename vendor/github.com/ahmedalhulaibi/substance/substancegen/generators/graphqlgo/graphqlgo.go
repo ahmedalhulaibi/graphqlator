@@ -110,7 +110,7 @@ func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 			//fmt.Println("GQL Key Type ", constraint.TableName, constraint.ColumnName, gqlKeyTypes)
 			for _, gqlKeyType := range gqlKeyTypes {
 				switch {
-				case gqlKeyType == "":
+				case gqlKeyType == "" || gqlKeyType == " ":
 
 					newGqlObjProperty := substancegen.GenObjectProperty{
 						ScalarName: gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].ScalarName,

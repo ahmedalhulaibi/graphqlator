@@ -12,7 +12,7 @@
     "substancegen",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "da25cd7704a7a419fbc517fd9191818655b038b9"
+  revision = "3149ba6a00bdda4995d95cc3315e4df45166620e"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
