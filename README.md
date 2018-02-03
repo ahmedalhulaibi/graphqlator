@@ -1,7 +1,7 @@
 # Graphqlator CLI
-__*This project is a WIP. The end goal is to generate source for a graphql server*__
+__*This project is a WIP.*__
 
-Graphqlator helps you generate a GraphQL type schema. Type 'graphqlator help' to see usage.
+Graphqlator takes your existing database schema and generates code for a GraphQL-Go server. Type 'graphqlator help' to see usage.
 
 A command line tool that generates a GraphQL type schema from a database table schema.
 
@@ -42,3 +42,10 @@ graphqlator describe postgres "postgres://username:password@localhost:5432/postg
 
 graphqlator generate postgres "postgres://username:password@localhost:5432/postgres" orders persons antiorders
 ```
+
+# External Libraries
+[Substance](https://github.com/ahmedalhulaibi/substance) - This library is used to introspect on the database information schema and generate the graphql-go code.
+
+[grahpql-go](https://github.com/graphql-go/graphql) - The generated code is using this implementation of GraphQL in Go.
+
+[GORM](https://github.com/jinzhu/gorm) - The generated code is using GORM.
