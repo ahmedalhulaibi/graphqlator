@@ -3,3 +3,4 @@ debug
 .vscode/
 local*
 build-bin.sh
+dist
