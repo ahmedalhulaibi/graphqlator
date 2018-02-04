@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ahmedalhulaibi/substance"
+	_ "github.com/lib/pq"
 )
 
 func init() {
@@ -21,8 +22,52 @@ type pgsql struct {
 
 /*GetCurrentDatabaseName returns currrent database schema name as string*/
 func (p pgsql) GetCurrentDatabaseNameFunc(dbType string, connectionString string) (string, error) {
-	returnValue := "postgres"
-	var err error
+	returnValue := "placeholder"
+	db, err := sql.Open(dbType, connectionString)
+	defer db.Close()
+	if err != nil {
+		return "", err
+	}
+
+	rows, err := db.Query(GetCurrentDatabaseNameQuery)
+	if err != nil {
+		return "", err
+	}
+
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		return "", err
+	}
+	// Make a slice for the values
+	values := make([]interface{}, len(columns))
+
+	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
+	// references into such a slice
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return "", err
+		}
+
+		// Print data
+		for i, value := range values {
+			switch value.(type) {
+			case []byte:
+				switch columns[i] {
+				case "current_database":
+					returnValue = string(value.([]byte))
+				}
+			}
+		}
+		//fmt.Println("-----------------------------------")
+	}
+
 	return returnValue, err
 }
 
@@ -82,7 +127,6 @@ func (p pgsql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 				switch columns[i] {
 				case "tablename":
 					newColDesc.TableName = string(value.([]byte))
-				case "schemaname":
 					newColDesc.PropertyName = string(value.([]byte))
 				}
 			}
@@ -312,6 +356,21 @@ func (p pgsql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 }
 
 func (p pgsql) GetGoDataType(sqlType string) (string, error) {
+	if regexDataTypePatterns == nil {
+		regexDataTypePatterns["bit.*"] = "int64"
+		regexDataTypePatterns["bool.*|tinyint\\(1\\)"] = "bool"
+		regexDataTypePatterns["tinyint.*"] = "int8"
+		regexDataTypePatterns["unsigned\\stinyint.*"] = "uint8"
+		regexDataTypePatterns["smallint.*"] = "int16"
+		regexDataTypePatterns["unsigned\\ssmallint.*"] = "uint16"
+		regexDataTypePatterns["(mediumint.*|int.*)"] = "int32"
+		regexDataTypePatterns["unsigned\\s(mediumint.*|int.*)"] = "uint32"
+		regexDataTypePatterns["bigint.*"] = "int64"
+		regexDataTypePatterns["unsigned\\sbigint.*"] = "uint64"
+		regexDataTypePatterns["(unsigned\\s){0,1}(double.*|float.*|dec.*)"] = "float64"
+		regexDataTypePatterns["varchar.*|date.*|time.*|year.*|char.*|.*text.*|enum.*|set.*|.*blob.*|.*binary.*"] = "string"
+	}
+
 	for pattern, value := range regexDataTypePatterns {
 		match, err := regexp.MatchString(pattern, sqlType)
 		if match && err == nil {

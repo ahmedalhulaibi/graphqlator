@@ -1,5 +1,8 @@
 package pgsqlsubstance
 
+/*GetCurrentDatabaseNameQuery used in GetCurrentDatabaseNamefunc*/
+var GetCurrentDatabaseNameQuery string = `select current_database();`
+
 /*DescribeDatabaseQuery used in DescribeDatabaseFunc*/
 var DescribeDatabaseQuery string = `select * from pg_catalog.pg_tables where schemaname not in ('pg_catalog','information_schema');`
 

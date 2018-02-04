@@ -24,6 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
+required = ["github.com/go-sql-driver/mysql","github.com/lib/pq"]
 
 [[constraint]]
   branch = "feature/tests"

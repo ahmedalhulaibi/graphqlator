@@ -28,14 +28,12 @@ func (t testsql) DescribeDatabaseFunc(dbType string, connectionString string) ([
 		PropertyType: "Table",
 		PropertyName: "TableNumberOne",
 		TableName:    "TableNumberOne",
-	})
-	columnDesc = append(columnDesc, substance.ColumnDescription{
+	}, substance.ColumnDescription{
 		DatabaseName: "testDatabase",
 		PropertyType: "Table",
 		PropertyName: "TableNumberTwo",
 		TableName:    "TableNumberTwo",
-	})
-	columnDesc = append(columnDesc, substance.ColumnDescription{
+	}, substance.ColumnDescription{
 		DatabaseName: "testDatabase",
 		PropertyType: "Table",
 		PropertyName: "TableNumberThree",
@@ -55,15 +53,13 @@ func (t testsql) DescribeTableFunc(dbType string, connectionString string, table
 			PropertyType: "int32",
 			PropertyName: "UniqueIdOne",
 			Nullable:     false,
-		})
-		columnDesc = append(columnDesc, substance.ColumnDescription{
+		}, substance.ColumnDescription{
 			DatabaseName: "testDatabase",
 			TableName:    "TableNumberOne",
 			PropertyType: "string",
 			PropertyName: "Name",
 			Nullable:     false,
-		})
-		columnDesc = append(columnDesc, substance.ColumnDescription{
+		}, substance.ColumnDescription{
 			DatabaseName: "testDatabase",
 			TableName:    "TableNumberOne",
 			PropertyType: "float64",
@@ -77,8 +73,7 @@ func (t testsql) DescribeTableFunc(dbType string, connectionString string, table
 			PropertyName: "UniqueIdTwo",
 			PropertyType: "int32",
 			Nullable:     false,
-		})
-		columnDesc = append(columnDesc, substance.ColumnDescription{
+		}, substance.ColumnDescription{
 			DatabaseName: "testDatabase",
 			TableName:    "TableNumberTwo",
 			PropertyName: "ForeignIdOne",
@@ -92,15 +87,13 @@ func (t testsql) DescribeTableFunc(dbType string, connectionString string, table
 			PropertyName: "UniqueIdThree",
 			PropertyType: "int32",
 			Nullable:     false,
-		})
-		columnDesc = append(columnDesc, substance.ColumnDescription{
+		}, substance.ColumnDescription{
 			DatabaseName: "testDatabase",
 			TableName:    "TableNumberThree",
 			PropertyName: "ForeignIdOne",
 			PropertyType: "int32",
 			Nullable:     false,
-		})
-		columnDesc = append(columnDesc, substance.ColumnDescription{
+		}, substance.ColumnDescription{
 			DatabaseName: "testDatabase",
 			TableName:    "TableNumberThree",
 			PropertyName: "ForeignIdTwo",
@@ -121,8 +114,7 @@ func (t testsql) DescribeTableRelationshipFunc(dbType string, connectionString s
 			ColumnName:          "ForeignIdOne",
 			ReferenceTableName:  "TableNumberOne",
 			ReferenceColumnName: "UniqueIdOne",
-		})
-		columnRel = append(columnRel, substance.ColumnRelationship{
+		}, substance.ColumnRelationship{
 			TableName:           "TableNumberThree",
 			ColumnName:          "ForeignIdOne",
 			ReferenceTableName:  "TableNumberOne",
@@ -154,8 +146,7 @@ func (t testsql) DescribeTableConstraintsFunc(dbType string, connectionString st
 			TableName:      "TableNumberTwo",
 			ColumnName:     "UniqueIdTwo",
 			ConstraintType: "PRIMARY KEY",
-		})
-		columnConstraint = append(columnConstraint, substance.ColumnConstraint{
+		}, substance.ColumnConstraint{
 			TableName:      "TableNumberTwo",
 			ColumnName:     "ForeignIdOne",
 			ConstraintType: "FOREIGN KEY",
@@ -165,18 +156,15 @@ func (t testsql) DescribeTableConstraintsFunc(dbType string, connectionString st
 			TableName:      "TableNumberThree",
 			ColumnName:     "UniqueIdThree",
 			ConstraintType: "PRIMARY KEY",
-		})
-		columnConstraint = append(columnConstraint, substance.ColumnConstraint{
+		}, substance.ColumnConstraint{
 			TableName:      "TableNumberThree",
 			ColumnName:     "ForeignIdOne",
 			ConstraintType: "UNIQUE",
-		})
-		columnConstraint = append(columnConstraint, substance.ColumnConstraint{
+		}, substance.ColumnConstraint{
 			TableName:      "TableNumberThree",
 			ColumnName:     "ForeignIdOne",
 			ConstraintType: "FOREIGN KEY",
-		})
-		columnConstraint = append(columnConstraint, substance.ColumnConstraint{
+		}, substance.ColumnConstraint{
 			TableName:      "TableNumberThree",
 			ColumnName:     "ForeignIdTwo",
 			ConstraintType: "FOREIGN KEY",

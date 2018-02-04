@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/ahmedalhulaibi/substance"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func init() {
