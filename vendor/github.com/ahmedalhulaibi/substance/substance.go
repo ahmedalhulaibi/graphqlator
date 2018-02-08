@@ -44,20 +44,27 @@ type ColumnConstraint struct {
 	ConstraintType string
 }
 
+/*GetCurrentDatabaseName returns currrent database schema name as string*/
 func GetCurrentDatabaseName(dbType string, connectionString string) (string, error) {
 	return substancePlugins[dbType].GetCurrentDatabaseNameFunc(dbType, connectionString)
 }
 
+/*DescribeDatabase returns tables in database*/
 func DescribeDatabase(dbType string, connectionString string) ([]ColumnDescription, error) {
 	return substancePlugins[dbType].DescribeDatabaseFunc(dbType, connectionString)
 }
+
+/*DescribeTable returns columns of a table*/
 func DescribeTable(dbType string, connectionString string, tableName string) ([]ColumnDescription, error) {
 	return substancePlugins[dbType].DescribeTableFunc(dbType, connectionString, tableName)
 }
+
+/*DescribeTableRelationship returns all foreign column references in database table*/
 func DescribeTableRelationship(dbType string, connectionString string, tableName string) ([]ColumnRelationship, error) {
 	return substancePlugins[dbType].DescribeTableRelationshipFunc(dbType, connectionString, tableName)
 }
 
+/*DescribeTableConstraints returns all column constraints in a database table*/
 func DescribeTableConstraints(dbType string, connectionString string, tableName string) ([]ColumnConstraint, error) {
 	return substancePlugins[dbType].DescribeTableConstraintsFunc(dbType, connectionString, tableName)
 }

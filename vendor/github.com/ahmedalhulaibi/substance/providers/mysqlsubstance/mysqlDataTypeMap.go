@@ -1,10 +1,8 @@
 package mysqlsubstance
 
-
-
 var regexDataTypePatterns = make(map[string]string)
 
-func init(){
+func init() {
 	regexDataTypePatterns["bit.*"] = "int64"
 	regexDataTypePatterns["bool.*|tinyint\\(1\\)"] = "bool"
 	regexDataTypePatterns["tinyint.*"] = "int8"

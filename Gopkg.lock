@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  branch = "feature/tests"
+  branch = "master"
   name = "github.com/ahmedalhulaibi/substance"
   packages = [
     ".",
@@ -12,7 +12,7 @@
     "substancegen",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "80344b7016744a1723700f3bb7ec2d9f16cd0411"
+  revision = "47bfac6b068cf0acc93343e4f660308aedef8149"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -50,6 +50,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "89f41c439cabd9d05f63df9e0294487c5e64f7b1e0c72082dd7447f9598ed21c"
+  inputs-digest = "aadb88d65a9ecb9b1097b6f96a14d66be53b8f63e4f281cbb64af887654ef95d"
   solver-name = "gps-cdcl"
   solver-version = 1

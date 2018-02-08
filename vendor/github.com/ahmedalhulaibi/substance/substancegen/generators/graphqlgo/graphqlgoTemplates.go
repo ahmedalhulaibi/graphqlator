@@ -1,5 +1,6 @@
 package graphqlgo
 
+/*GraphqlGoExecuteQueryFunc boilerplate string for graphql-go function to execute a graphql query*/
 var GraphqlGoExecuteQueryFunc = `
 func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	result := graphql.Do(graphql.Params{
@@ -13,6 +14,7 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 }
 `
 
+/*GraphqlGoMainConfig boilerplate string to setup graphl-go and http handler*/
 var GraphqlGoMainConfig = `
 rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: fields}
 	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}

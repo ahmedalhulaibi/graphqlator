@@ -42,6 +42,7 @@ type gql struct {
 	GraphqlDbTypeImports  map[string]string
 }
 
+/*GetObjectTypesFunc*/
 func (g gql) GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]substancegen.GenObjectType {
 	//init array of column descriptions for all tables
 	tableDesc := []substance.ColumnDescription{}
@@ -69,7 +70,7 @@ func (g gql) GetObjectTypesFunc(dbType string, connectionString string, tableNam
 			ScalarName: colDesc.PropertyName,
 			ScalarType: colDesc.PropertyType,
 			Nullable:   colDesc.Nullable,
-			KeyType:    []string{colDesc.KeyType},
+			KeyType:    []string{""},
 		}
 		newGqlObjProperty.Tags = make(substancegen.GenObjectTag)
 		if g.GraphqlDbTypeGormFlag[dbType] {

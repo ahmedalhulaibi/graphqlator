@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/ahmedalhulaibi/substance"
+	/*blank import to load mysql driver*/
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -138,7 +139,7 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	return columnDesc, nil
 }
 
-/*DescribeTable returns columns in database*/
+/*DescribeTable returns columns of a table*/
 func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnDescription, error) {
 
 	db, err := sql.Open(dbType, connectionString)
@@ -196,9 +197,12 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
-					newColDesc.PropertyType, _ = m.GetGoDataType(string(value.([]byte)))
+					newColDesc.PropertyType, err = m.GetGoDataType(string(value.([]byte)))
+					if err != nil {
+						fmt.Printf("Warning: %s", err.Error())
+					}
 				case "Key":
-					//newColDesc.KeyType = string(value.([]byte))
+					newColDesc.KeyType = string(value.([]byte))
 				case "Null":
 					if string(value.([]byte)) == "YES" {
 						newColDesc.Nullable = true

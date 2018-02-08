@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ahmedalhulaibi/substance"
+	/*blank import to load postgres driver*/
 	_ "github.com/lib/pq"
 )
 

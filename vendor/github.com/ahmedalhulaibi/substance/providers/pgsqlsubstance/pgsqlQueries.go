@@ -1,13 +1,13 @@
 package pgsqlsubstance
 
 /*GetCurrentDatabaseNameQuery used in GetCurrentDatabaseNamefunc*/
-var GetCurrentDatabaseNameQuery string = `select current_database();`
+var GetCurrentDatabaseNameQuery = `select current_database();`
 
 /*DescribeDatabaseQuery used in DescribeDatabaseFunc*/
-var DescribeDatabaseQuery string = `select * from pg_catalog.pg_tables where schemaname not in ('pg_catalog','information_schema');`
+var DescribeDatabaseQuery = `select * from pg_catalog.pg_tables where schemaname not in ('pg_catalog','information_schema');`
 
 /*DescribeTableQuery used in DescribeTableFunc*/
-var DescribeTableQuery string = `select
+var DescribeTableQuery = `select
 att.attrelid as "classId",
 class.relname as "Table",
 att.attname as "Field",
@@ -42,7 +42,7 @@ att.attrelid,
 att.attnum;`
 
 /*DescribeTableRelationshipQuery used in DescribeTableRelationshipFunc*/
-var DescribeTableRelationshipQuery string = `select 
+var DescribeTableRelationshipQuery = `select 
 tc.table_name as "table_name",
 kcu.column_name as "column",
 class.relname as "ref_table",
@@ -58,7 +58,7 @@ con.confkey as "ref_columnNum"
 	  ;`
 
 /*DescribeTableConstraintsQuery used in DescribeTableConstraintsFunc*/
-var DescribeTableConstraintsQuery string = `select distinct on (con.conrelid, con.conkey, con.confrelid, con.confkey)
+var DescribeTableConstraintsQuery = `select distinct on (con.conrelid, con.conkey, con.confrelid, con.confkey)
 	tc.table_name,
 	kcu.column_name as "column",
 	contype
