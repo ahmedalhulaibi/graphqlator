@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/ahmedalhulaibi/substance/substancegen"
+	/*blank import load graphlgo plugin*/
 	_ "github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 	"github.com/spf13/cobra"
 )
