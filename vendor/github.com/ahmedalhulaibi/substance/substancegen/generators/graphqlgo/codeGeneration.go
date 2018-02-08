@@ -14,10 +14,8 @@ func (g gql) OutputCodeFunc(dbType string, connectionString string, gqlObjectTyp
 
 	g.GenPackageImports(dbType, &buff)
 	//print schema
+	g.AddJSONTagsToProperties(gqlObjectTypes)
 	for _, value := range gqlObjectTypes {
-		for _, propVal := range value.Properties {
-			propVal.Tags["json"] = append(propVal.Tags["json"], propVal.ScalarName)
-		}
 		g.GenObjectTypeToStringFunc(value, &buff)
 		g.GenGormObjectTableNameOverrideFunc(value, &buff)
 		g.GenGraphqlGoTypeFunc(value, &buff)
@@ -26,6 +24,15 @@ func (g gql) OutputCodeFunc(dbType string, connectionString string, gqlObjectTyp
 	g.GenGraphqlGoMainFunc(dbType, connectionString, gqlObjectTypes, &buff)
 	fmt.Print(buff.String())
 	return buff
+}
+
+func (g gql) AddJSONTagsToProperties(gqlObjectTypes map[string]substancegen.GenObjectType) {
+
+	for _, value := range gqlObjectTypes {
+		for _, propVal := range value.Properties {
+			propVal.Tags["json"] = append(propVal.Tags["json"], propVal.ScalarName)
+		}
+	}
 }
 
 func (g gql) GenPackageImports(dbType string, buff *bytes.Buffer) {
