@@ -9,8 +9,6 @@ Graphqlator takes your existing database schema and generates code for a GraphQL
 - mariadb
 - postgres
 
-
-
 ## Installation:
 
 Download prebuilt binaries from the [releases page](https://github.com/ahmedalhulaibi/go-graphqlator-cli/releases)
