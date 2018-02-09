@@ -4,3 +4,4 @@ debug
 local*
 build-bin.sh
 dist
+graphqlator-pkg.json
