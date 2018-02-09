@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 
@@ -59,6 +60,21 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 			}
 			mainFile.Close()
 		}
+
+		{
+			formatFile := createFile("format.sh")
+			var formatFileBuffer bytes.Buffer
+			formatFileBuffer.WriteString("#!usr/bin/env bash\n")
+			formatFileBuffer.WriteString("gofmt -w ./*.go\n")
+			formatFileBuffer.WriteString("goreturns -w ./*.go\n")
+			_, err := formatFile.Write(formatFileBuffer.Bytes())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			formatFile.Close()
+		}
+		check(exec.Command("bash", "format.sh").Run(), "format failed")
+
 	},
 }
 
