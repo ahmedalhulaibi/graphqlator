@@ -1,9 +1,15 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
+
 	"github.com/ahmedalhulaibi/substance/substancegen"
-	/*blank import load graphlgo plugin*/
-	_ "github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 	"github.com/spf13/cobra"
 )
 
@@ -12,20 +18,67 @@ func init() {
 }
 
 var generate = &cobra.Command{
-	Use:   "generate [database type] [connection string] [table names...]",
-	Short: "Generate GraphQL type schema from database table(s).",
-	Long:  `Generate GraphQL type schema from database table(s).`,
-	Args:  cobra.MinimumNArgs(3),
+	Use:   "generate",
+	Short: "Generate GraphQL type schema.",
+	Long: `Generate GraphQL type schema from database information schema and tables defined in grapqhlator-pkg.json
+Run 'graphqlator init' before running 'graphqlator generate'`,
+	Args: cobra.MaximumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		switch args[0] {
-		case "mariadb":
-			args[0] = "mysql"
-			break
+		gqlPkg := getGraphqlatorPkgFile()
+		gqlGen := substancegen.SubstanceGenPlugins["graphql-go"].(graphqlgo.Gql)
+		gqlObjectTypes := gqlGen.GetObjectTypesFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlPkg.TableNames)
+		gqlGen.AddJSONTagsToProperties(gqlObjectTypes)
+
+		{
+			dataTypeFile := createFile("dataTypes.go")
+
+			var dataTypeFileBuff bytes.Buffer
+			gqlGen.GenPackageImports(gqlPkg.DatabaseType, &dataTypeFileBuff)
+			for _, value := range gqlObjectTypes {
+				gqlGen.GenObjectTypeToStringFunc(value, &dataTypeFileBuff)
+				gqlGen.GenGormObjectTableNameOverrideFunc(value, &dataTypeFileBuff)
+				gqlGen.GenGraphqlGoTypeFunc(value, &dataTypeFileBuff)
+			}
+			_, err := dataTypeFile.Write(dataTypeFileBuff.Bytes())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			dataTypeFile.Close()
 		}
-		generateGqlSchema(args[0], args[1], args[2:len(args)])
+
+		{
+			mainFile := createFile("main.go")
+
+			var mainFileBuffer bytes.Buffer
+			gqlGen.GenPackageImports(gqlPkg.DatabaseType, &mainFileBuffer)
+			mainFileBuffer.WriteString(graphqlgo.GraphqlGoExecuteQueryFunc)
+			gqlGen.GenGraphqlGoMainFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlObjectTypes, &mainFileBuffer)
+			_, err := mainFile.Write(mainFileBuffer.Bytes())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			mainFile.Close()
+		}
 	},
 }
 
-func generateGqlSchema(dbType string, connectionString string, tableNames []string) {
-	substancegen.Generate("graphql-go", dbType, connectionString, tableNames)
+func getGraphqlatorPkgFile() gqlpackage {
+	f, err := ioutil.ReadFile("./graphqlator-pkg.json")
+	check(err, "Problem opening graphqlator-pkg.json make sure it exists.")
+	var gqlPkg gqlpackage
+	json.Unmarshal(f, &gqlPkg)
+	return gqlPkg
+}
+
+func createFile(filepath string) *os.File {
+	file, err := os.Open(filepath)
+	if err == nil {
+		file.Close()
+		os.Remove(file.Name())
+	}
+	file, err = os.Create(filepath)
+	if err != nil {
+		check(err, fmt.Sprintf("Problem creating file %s", filepath))
+	}
+	return file
 }
