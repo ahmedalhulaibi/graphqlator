@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	gqlPlugin := gql{}
+	gqlPlugin := Gql{}
 	gqlPlugin.GraphqlDataTypes = make(map[string]string)
 	gqlPlugin.GraphqlDataTypes["int"] = "graphql.Int"
 	gqlPlugin.GraphqlDataTypes["int8"] = "graphql.Int"
@@ -35,7 +35,7 @@ func init() {
 	substancegen.Register("graphql-go", gqlPlugin)
 }
 
-type gql struct {
+type Gql struct {
 	Name                  string
 	GraphqlDataTypes      map[string]string
 	GraphqlDbTypeGormFlag map[string]bool
@@ -43,7 +43,7 @@ type gql struct {
 }
 
 /*GetObjectTypesFunc*/
-func (g gql) GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]substancegen.GenObjectType {
+func (g Gql) GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]substancegen.GenObjectType {
 	//init array of column descriptions for all tables
 	tableDesc := []substance.ColumnDescription{}
 
@@ -87,7 +87,7 @@ func (g gql) GetObjectTypesFunc(dbType string, connectionString string, tableNam
 	return gqlObjectTypes
 }
 
-func (g gql) ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjectTypes map[string]substancegen.GenObjectType) map[string]substancegen.GenObjectType {
+func (g Gql) ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjectTypes map[string]substancegen.GenObjectType) map[string]substancegen.GenObjectType {
 	relationshipDesc := []substance.ColumnRelationship{}
 	constraintDesc := []substance.ColumnConstraint{}
 
