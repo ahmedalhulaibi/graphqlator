@@ -1,5 +1,4 @@
 language: go
 
 after_success:
- - go get github.com/goreleaser/goreleaser
- - . ./goreleaser-release.sh
+ - test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash
