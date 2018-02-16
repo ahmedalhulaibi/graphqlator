@@ -186,3 +186,24 @@ func (g Gql) GenGraphlGoSampleObjectQuery(gqlObjectTypes map[string]substancegen
 	}
 	buff.WriteString("},")
 }
+
+func (g Gql) OutputGraphqlSchema(gqlObjectTypes map[string]substancegen.GenObjectType) bytes.Buffer {
+	var buff bytes.Buffer
+	//print schema
+	for _, value := range gqlObjectTypes {
+		buff.WriteString(fmt.Sprintf("type %s {\n", value.Name))
+		for _, propVal := range value.Properties {
+			nullSymbol := "!"
+			if propVal.Nullable {
+				nullSymbol = ""
+			}
+			if propVal.IsList {
+				buff.WriteString(fmt.Sprintf("\t %s: [%s]%s\n", propVal.ScalarName, propVal.ScalarType, nullSymbol))
+			} else {
+				buff.WriteString(fmt.Sprintf("\t %s: %s%s\n", propVal.ScalarName, propVal.ScalarType, nullSymbol))
+			}
+		}
+		buff.WriteString(fmt.Sprintf("}\n"))
+	}
+	return buff
+}
