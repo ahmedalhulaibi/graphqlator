@@ -3,6 +3,17 @@ __*This project is a WIP.*__
 
 Graphqlator takes your existing database schema and generates code for a GraphQL-Go server. Type 'graphqlator help' to see usage.
 
+## Status
+
+| Build                             | Report card                           |
+| :-------------------------------: | :-----------------------------------: |
+| [![Build][build-badge]][build-link] | [![Report card][rc-badge]][rc-link]   |
+
+[build-badge]: https://travis-ci.org/ahmedalhulaibi/go-graphqlator-cli.svg?branch=master "Travis-CI build status"
+[build-link]: https://travis-ci.org/ahmedalhulaibi/go-graphqlator-cli "Travis-CI build status link"
+[rc-badge]: https://goreportcard.com/badge/github.com/ahmedalhulaibi/go-graphqlator-cli "Report card status"
+[rc-link]: https://goreportcard.com/report/github.com/ahmedalhulaibi/go-graphqlator-cli "Report card status"
+
 ## Supported Data Stores:
 
 - mysql
