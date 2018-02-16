@@ -9,10 +9,10 @@ Graphqlator takes your existing database schema and generates code for a GraphQL
 | :-------------------------------: | :-----------------------------------: |
 | [![Build][build-badge]][build-link] | [![Report card][rc-badge]][rc-link]   |
 
-[build-badge]: https://travis-ci.org/ahmedalhulaibi/go-graphqlator-cli.svg?branch=master "Travis-CI build status"
-[build-link]: https://travis-ci.org/ahmedalhulaibi/go-graphqlator-cli "Travis-CI build status link"
-[rc-badge]: https://goreportcard.com/badge/github.com/ahmedalhulaibi/go-graphqlator-cli "Report card status"
-[rc-link]: https://goreportcard.com/report/github.com/ahmedalhulaibi/go-graphqlator-cli "Report card status"
+[build-badge]: https://travis-ci.org/ahmedalhulaibi/graphqlator.svg?branch=master "Travis-CI build status"
+[build-link]: https://travis-ci.org/ahmedalhulaibi/graphqlator "Travis-CI build status link"
+[rc-badge]: https://goreportcard.com/badge/github.com/ahmedalhulaibi/graphqlator "Report card status"
+[rc-link]: https://goreportcard.com/report/github.com/ahmedalhulaibi/graphqlator "Report card status"
 
 ## Supported Data Stores:
 
