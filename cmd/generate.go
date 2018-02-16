@@ -62,6 +62,16 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 		}
 
 		{
+			graphqlSchemaFile := createFile("schema.graphql")
+			graphqlSchemaFileBuffer := gqlGen.OutputGraphqlSchema(gqlObjectTypes)
+			_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			graphqlSchemaFile.Close()
+		}
+
+		{
 			formatFile := createFile("format.sh")
 			var formatFileBuffer bytes.Buffer
 			formatFileBuffer.WriteString("#!usr/bin/env bash\n")
