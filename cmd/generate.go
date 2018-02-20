@@ -19,6 +19,7 @@ var updateGormQueries bool
 var updateGqlFields bool
 var updateGqlTypes bool
 var updateModel bool
+var updateMain bool
 var updateall bool
 
 func init() {
@@ -26,6 +27,7 @@ func init() {
 	generate.Flags().BoolVarP(&updateGormQueries, "update-gormQueries", "q", false, "update and overwrite gormQueries.go")
 	generate.Flags().BoolVarP(&updateGqlFields, "update-gqlFields", "g", false, "update and overwrite graphqlFields.go")
 	generate.Flags().BoolVarP(&updateGqlTypes, "update-gqlTypes", "t", false, "update and overwrite graphqlTypes.go")
+	generate.Flags().BoolVarP(&updateMain, "update-main", "m", false, "update and overwrite main.go")
 	generate.Flags().BoolVarP(&updateModel, "update-all", "a", false, "update and overwrite all files")
 	RootCmd.AddCommand(generate)
 }
@@ -43,7 +45,10 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 		gqlGen.AddJSONTagsToProperties(gqlObjectTypes)
 
 		if gqlPkg.GenMode == "graphql-go" {
-			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema {
+			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema && !updateMain {
+				updateall = true
+			}
+			if updateMain || updateall {
 				mainFile := createFile("main.go", true)
 
 				var mainFileBuffer bytes.Buffer
