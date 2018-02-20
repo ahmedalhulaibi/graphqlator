@@ -12,7 +12,7 @@
     "substancegen",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "b26c31e416c36a70cf653cce854cc26b89d29790"
+  revision = "5e779efc449cf275b7424419f02df8af6ff5fde8"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -25,6 +25,12 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
   branch = "master"

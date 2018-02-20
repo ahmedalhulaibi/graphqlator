@@ -32,13 +32,13 @@ type GenObjectTag map[string][]string
 
 /*GenObjectProperty represents a property of an object (aka a field of a struct) */
 type GenObjectProperty struct {
-	ScalarName   string
-	ScalarType   string
-	IsList       bool
-	Nullable     bool
-	KeyType      []string
-	Tags         GenObjectTag
-	IsObjectType bool
+	ScalarName   string       `json:"scalarName"`
+	ScalarType   string       `json:"scalarType"`
+	IsList       bool         `json:"isList"`
+	Nullable     bool         `json:"nullable"`
+	KeyType      []string     `json:"keyType"`
+	Tags         GenObjectTag `json:"tags"`
+	IsObjectType bool         `json:"isObjectType"`
 }
 
 /*GenObjectProperties a type defining a map of GenObjectProperty
@@ -48,8 +48,8 @@ type GenObjectProperties map[string]GenObjectProperty
 
 /*GenObjectType represents an object (aka a struct) */
 type GenObjectType struct {
-	Name       string
-	Properties GenObjectProperties
+	Name       string              `json:"objectName"`
+	Properties GenObjectProperties `json:"properties"`
 }
 
 /*Generate is a one stop function to quickly generate code */

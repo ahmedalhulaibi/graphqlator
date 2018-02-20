@@ -1,10 +1,9 @@
 package graphqlgo
 
 import (
-	"strings"
-
 	"github.com/ahmedalhulaibi/substance"
 	"github.com/ahmedalhulaibi/substance/substancegen"
+	"github.com/jinzhu/inflection"
 )
 
 func init() {
@@ -217,7 +216,7 @@ func (g Gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 			gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
 			newGqlObjProperty := substancegen.GenObjectProperty{
 				ScalarName:   colRel.TableName,
-				ScalarType:   strings.TrimSuffix(colRel.TableName, "s"),
+				ScalarType:   inflection.Singular(colRel.TableName),
 				Nullable:     true,
 				IsList:       true,
 				IsObjectType: true,
@@ -231,8 +230,8 @@ func (g Gql) ResolveRelationshipsFunc(dbType string, connectionString string, ta
 			gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
 			gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
 			newGqlObjProperty := substancegen.GenObjectProperty{
-				ScalarName:   strings.TrimSuffix(colRel.TableName, "s"),
-				ScalarType:   strings.TrimSuffix(colRel.TableName, "s"),
+				ScalarName:   inflection.Singular(colRel.TableName),
+				ScalarType:   inflection.Singular(colRel.TableName),
 				Nullable:     true,
 				IsList:       false,
 				IsObjectType: true,

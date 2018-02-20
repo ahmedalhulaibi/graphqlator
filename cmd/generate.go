@@ -15,9 +15,18 @@ import (
 )
 
 var updateSchema bool
+var updateGormQueries bool
+var updateGqlFields bool
+var updateGqlTypes bool
+var updateModel bool
+var updateall bool
 
 func init() {
 	generate.Flags().BoolVarP(&updateSchema, "update-schema", "u", false, "update and overwrite schema.graphql")
+	generate.Flags().BoolVarP(&updateGormQueries, "update-gormQueries", "q", false, "update and overwrite gormQueries.go")
+	generate.Flags().BoolVarP(&updateGqlFields, "update-gqlFields", "g", false, "update and overwrite graphqlFields.go")
+	generate.Flags().BoolVarP(&updateGqlTypes, "update-gqlTypes", "t", false, "update and overwrite graphqlTypes.go")
+	generate.Flags().BoolVarP(&updateModel, "update-all", "a", false, "update and overwrite all files")
 	RootCmd.AddCommand(generate)
 }
 
@@ -34,7 +43,36 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 		gqlGen.AddJSONTagsToProperties(gqlObjectTypes)
 
 		if gqlPkg.GenMode == "graphql-go" {
-			{
+			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema {
+				mainFile := createFile("main.go", true)
+
+				var mainFileBuffer bytes.Buffer
+				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &mainFileBuffer)
+				mainFileBuffer.WriteString(graphqlgo.GraphqlGoExecuteQueryFunc)
+				gqlGen.GenGraphqlGoMainFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlObjectTypes, &mainFileBuffer)
+				_, err := mainFile.Write(mainFileBuffer.Bytes())
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				mainFile.Close()
+			}
+
+			if updateGqlTypes || updateall {
+				graphqlTypesFile := createFile("graphqlTypes.go", true)
+
+				var graphqlTypesFileBuff bytes.Buffer
+				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &graphqlTypesFileBuff)
+				for _, value := range gqlObjectTypes {
+					gqlGen.GenGraphqlGoTypeFunc(value, &graphqlTypesFileBuff)
+				}
+				_, err := graphqlTypesFile.Write(graphqlTypesFileBuff.Bytes())
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				graphqlTypesFile.Close()
+			}
+
+			if updateModel || updateall {
 				dataModelFile := createFile("model.go", true)
 
 				var dataModelFileBuff bytes.Buffer
@@ -50,57 +88,56 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				dataModelFile.Close()
 			}
 
-			{
-				graphqlTypesFile := createFile("graphqlTypes.go", true)
+			if updateGqlFields || updateall {
+				gqlFieldsFile := createFile("graphqlFields.go", true)
 
-				var graphqlTypesFileBuff bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &graphqlTypesFileBuff)
+				var gqlFieldsFileBuff bytes.Buffer
+				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gqlFieldsFileBuff)
+				gqlGen.GenGraphqlGoRootQueryFunc(gqlObjectTypes, &gqlFieldsFileBuff)
+				_, err := gqlFieldsFile.Write(gqlFieldsFileBuff.Bytes())
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				gqlFieldsFile.Close()
+			}
+
+			if updateGormQueries || updateall {
+				gormQueriesFile := createFile("gormQueries.go", true)
+
+				var gormQueriesFileBuff bytes.Buffer
+				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gormQueriesFileBuff)
 				for _, value := range gqlObjectTypes {
-					gqlGen.GenGraphqlGoTypeFunc(value, &graphqlTypesFileBuff)
+					gqlGen.GenObjectGormCrud(value, &gormQueriesFileBuff)
 				}
-				_, err := graphqlTypesFile.Write(graphqlTypesFileBuff.Bytes())
+				_, err := gormQueriesFile.Write(gormQueriesFileBuff.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
 				}
-				graphqlTypesFile.Close()
+				gormQueriesFile.Close()
+			}
+
+			if updateSchema || updateall {
+				graphqlSchemaFile := createFile("schema.graphql", true)
+				graphqlSchemaFileBuffer := gqlGen.OutputGraphqlSchema(gqlObjectTypes)
+				_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				graphqlSchemaFile.Close()
 			}
 
 			{
-				mainFile := createFile("main.go", true)
-
-				var mainFileBuffer bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &mainFileBuffer)
-				mainFileBuffer.WriteString(graphqlgo.GraphqlGoExecuteQueryFunc)
-				gqlGen.GenGraphqlGoMainFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlObjectTypes, &mainFileBuffer)
-				_, err := mainFile.Write(mainFileBuffer.Bytes())
+				formatFile := createFile("format.sh", true)
+				var formatFileBuffer bytes.Buffer
+				formatFileBuffer.WriteString("#!usr/bin/env bash\n")
+				formatFileBuffer.WriteString("gofmt -w ./*.go\n")
+				formatFileBuffer.WriteString("goreturns -w ./*.go\n")
+				_, err := formatFile.Write(formatFileBuffer.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
 				}
-				mainFile.Close()
+				formatFile.Close()
 			}
-		}
-
-		if updateSchema {
-			graphqlSchemaFile := createFile("schema.graphql", true)
-			graphqlSchemaFileBuffer := gqlGen.OutputGraphqlSchema(gqlObjectTypes)
-			_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-			graphqlSchemaFile.Close()
-		}
-
-		{
-			formatFile := createFile("format.sh", true)
-			var formatFileBuffer bytes.Buffer
-			formatFileBuffer.WriteString("#!usr/bin/env bash\n")
-			formatFileBuffer.WriteString("gofmt -w ./*.go\n")
-			formatFileBuffer.WriteString("goreturns -w ./*.go\n")
-			_, err := formatFile.Write(formatFileBuffer.Bytes())
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-			formatFile.Close()
 		}
 		check(exec.Command("bash", "format.sh").Run(), "format failed")
 

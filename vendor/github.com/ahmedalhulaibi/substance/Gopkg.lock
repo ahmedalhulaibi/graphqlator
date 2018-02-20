@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
+
+[[projects]]
+  branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -19,6 +25,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7ccce880309736ddcfd1ef3a51aac31c418f209730579eca2380e9adf3d3f6e9"
+  inputs-digest = "abfd5ab031b85afaad5f9951fecc499155de89646847c20222aa3a4bb4c4663b"
   solver-name = "gps-cdcl"
   solver-version = 1
