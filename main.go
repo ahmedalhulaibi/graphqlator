@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ahmedalhulaibi/go-graphqlator-cli/cmd"
+	"github.com/ahmedalhulaibi/graphqlator/cmd"
 
 	_ "github.com/ahmedalhulaibi/substance/providers/mysqlsubstance"
 	_ "github.com/ahmedalhulaibi/substance/providers/pgsqlsubstance"

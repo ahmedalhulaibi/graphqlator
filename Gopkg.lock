@@ -10,9 +10,12 @@
     "providers/pgsqlsubstance",
     "providers/testsubstance",
     "substancegen",
+    "substancegen/generators/genutil",
+    "substancegen/generators/gorm",
+    "substancegen/generators/gostruct",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "62ce84320d2bcb633103559f04f417e03d625ec3"
+  revision = "67e34b7aa2812a14cf3d7ecb707b2ca17786efff"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -25,6 +28,12 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
   branch = "master"
