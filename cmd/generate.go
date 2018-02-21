@@ -9,6 +9,8 @@ import (
 	"os/exec"
 
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
 	"github.com/spf13/cobra"
@@ -30,7 +32,7 @@ func init() {
 	generate.Flags().BoolVarP(&updateMain, "update-main", "m", false, "update and overwrite main.go")
 	generate.Flags().BoolVarP(&updateModel, "update-all", "a", false, "update and overwrite all files")
 	RootCmd.AddCommand(generate)
-}
+} 
 
 var generate = &cobra.Command{
 	Use:   "generate",
@@ -83,8 +85,8 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				var dataModelFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &dataModelFileBuff)
 				for _, value := range gqlObjectTypes {
-					gqlGen.GenObjectTypeToStringFunc(value, &dataModelFileBuff)
-					gqlGen.GenGormObjectTableNameOverrideFunc(value, &dataModelFileBuff)
+					gostruct.GenObjectTypeToStructFunc(value, &dataModelFileBuff)
+					gorm.GenGormObjectTableNameOverrideFunc(value, &dataModelFileBuff)
 				}
 				_, err := dataModelFile.Write(dataModelFileBuff.Bytes())
 				if err != nil {
@@ -112,7 +114,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				var gormQueriesFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gormQueriesFileBuff)
 				for _, value := range gqlObjectTypes {
-					gqlGen.GenObjectGormCrud(value, &gormQueriesFileBuff)
+					gorm.GenObjectGormCrud(value, &gormQueriesFileBuff)
 				}
 				_, err := gormQueriesFile.Write(gormQueriesFileBuff.Bytes())
 				if err != nil {
@@ -162,7 +164,7 @@ func createFile(filepath string, overwrite bool) *os.File {
 	if err == nil {
 		if overwrite {
 			file.Close()
-			os.Remove(file.Name())
+			os.Remove(file.Name()) 
 		} else {
 			return file
 		}

@@ -10,9 +10,12 @@
     "providers/pgsqlsubstance",
     "providers/testsubstance",
     "substancegen",
+    "substancegen/generators/genutil",
+    "substancegen/generators/gorm",
+    "substancegen/generators/gostruct",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "5e779efc449cf275b7424419f02df8af6ff5fde8"
+  revision = "67e34b7aa2812a14cf3d7ecb707b2ca17786efff"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"

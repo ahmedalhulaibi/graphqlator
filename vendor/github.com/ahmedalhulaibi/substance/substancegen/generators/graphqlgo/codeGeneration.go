@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"unicode"
 
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
+
 	"github.com/jinzhu/inflection"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
@@ -17,8 +20,8 @@ func (g Gql) OutputCodeFunc(dbType string, connectionString string, gqlObjectTyp
 	//print schema
 	g.AddJSONTagsToProperties(gqlObjectTypes)
 	for _, value := range gqlObjectTypes {
-		g.GenObjectTypeToStringFunc(value, &buff)
-		g.GenGormObjectTableNameOverrideFunc(value, &buff)
+		gostruct.GenObjectTypeToStructFunc(value, &buff)
+		gorm.GenGormObjectTableNameOverrideFunc(value, &buff)
 		g.GenGraphqlGoTypeFunc(value, &buff)
 	}
 	buff.WriteString(GraphqlGoExecuteQueryFunc)
@@ -45,46 +48,6 @@ func (g Gql) GenPackageImports(dbType string, buff *bytes.Buffer) {
 	buff.WriteString("\n)")
 }
 
-func (g Gql) GenObjectTypeToStringFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gqlObjectTypeNameSingular := inflection.Singular(gqlObjectType.Name)
-	buff.WriteString(fmt.Sprintf("\ntype %s struct {\n", gqlObjectTypeNameSingular))
-	for _, property := range gqlObjectType.Properties {
-		g.GenObjectPropertyToStringFunc(property, buff)
-	}
-	buff.WriteString("}\n")
-}
-
-func (g Gql) GenObjectPropertyToStringFunc(gqlObjectProperty substancegen.GenObjectProperty, buff *bytes.Buffer) {
-
-	a := []rune(gqlObjectProperty.ScalarName)
-	a[0] = unicode.ToUpper(a[0])
-	gqlObjectPropertyNameUpper := string(a)
-	if gqlObjectProperty.IsList {
-		buff.WriteString(fmt.Sprintf("\t%s\t[]%s\t", gqlObjectPropertyNameUpper, gqlObjectProperty.ScalarType))
-	} else {
-		buff.WriteString(fmt.Sprintf("\t%s\t%s\t", gqlObjectPropertyNameUpper, gqlObjectProperty.ScalarType))
-	}
-	g.GenObjectTagToStringFunc(gqlObjectProperty.Tags, buff)
-	buff.WriteString("\n")
-}
-
-func (g Gql) GenObjectTagToStringFunc(genObjectTags substancegen.GenObjectTag, buff *bytes.Buffer) {
-	buff.WriteString("`")
-	for key, tags := range genObjectTags {
-		buff.WriteString(fmt.Sprintf("%s:\"", key))
-		for _, tag := range tags {
-			buff.WriteString(fmt.Sprintf("%s", tag))
-		}
-		buff.WriteString("\" ")
-	}
-	buff.WriteString("`")
-}
-
-func (g Gql) GenGormObjectTableNameOverrideFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gqlObjectTypeNameSingular := inflection.Singular(gqlObjectType.Name)
-	buff.WriteString(fmt.Sprintf("\nfunc (%s) TableName() string {\n\treturn \"%s\"\n}\n", gqlObjectTypeNameSingular, gqlObjectType.Name))
-}
-
 func (g Gql) GenGraphqlGoTypeFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
 	a := []rune(inflection.Singular(gqlObjectType.Name))
 	a[0] = unicode.ToLower(a[0])
@@ -93,7 +56,7 @@ func (g Gql) GenGraphqlGoTypeFunc(gqlObjectType substancegen.GenObjectType, buff
 	buff.WriteString(fmt.Sprintf("\nvar %sType = graphql.NewObject(\n\tgraphql.ObjectConfig{\n\t\tName: \"%s\",\n\t\tFields: graphql.Fields{\n\t\t\t", gqlObjectTypeNameLowCamel, gqlObjectTypeNameSingular))
 
 	for _, property := range gqlObjectType.Properties {
-		g.GenGraphqlGoTypePropertyFunc(property, buff)
+		g.GenGraphqlGoTypePropertyFunc(*property, buff)
 	}
 
 	buff.WriteString(fmt.Sprintf("\n\t\t},\n\t},\n)\n"))
@@ -221,59 +184,4 @@ func (g Gql) OutputGraphqlSchema(gqlObjectTypes map[string]substancegen.GenObjec
 		buff.WriteString(fmt.Sprintf("}\n"))
 	}
 	return buff
-}
-
-func (g Gql) GenObjectGormCrud(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gqlObjectTypeNameSingular := inflection.Singular(gqlObjectType.Name)
-	var primaryKeyColumn string
-	for index, propVal := range gqlObjectType.Properties {
-		if stringInSlice("p", propVal.KeyType) || stringInSlice("PRIMARY KEY", propVal.KeyType) {
-			primaryKeyColumn = index
-			break
-		}
-	}
-
-	buff.WriteString(fmt.Sprintf("\n\nfunc Create%s (db *gorm.DB, new%s %s) {\n\tdb.Create(&new%s)\n}",
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular))
-
-	buff.WriteString(fmt.Sprintf("\n\nfunc Get%s (db *gorm.DB, query%s %s, result%s *%s) {\n\tdb.Where(&query%s).First(result%s)\n}",
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular))
-
-	buff.WriteString(fmt.Sprintf("\n\nfunc Update%s (db *gorm.DB, old%s %s, new%s %s, result%s *%s) {\n\tvar oldResult%s %s\n\tdb.Where(&old%s).First(&oldResult%s)\n\tif oldResult%s.%s == new%s.%s {\n\t\toldResult%s = new%s\n\t\tdb.Save(oldResult%s)\n\t}\n\tGet%s(db, new%s, result%s)\n}",
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		primaryKeyColumn,
-		gqlObjectTypeNameSingular,
-		primaryKeyColumn,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular))
-
-	buff.WriteString(fmt.Sprintf("\n\nfunc Delete%s (db *gorm.DB, old%s %s) {\n\tdb.Delete(&old%s)\n}",
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular))
 }

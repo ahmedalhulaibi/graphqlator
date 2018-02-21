@@ -18,3 +18,9 @@ script:
   - bash <(curl -s https://codecov.io/bash)
   - go test -v ./providers/pgsqlsubstance/ -coverprofile=coverage.txt -covermode=atomic
   - bash <(curl -s https://codecov.io/bash)
+  - go test -v ./substancegen/generators/genutil/ -coverprofile=coverage.txt -covermode=atomic
+  - bash <(curl -s https://codecov.io/bash)
+  - go test -v ./substancegen/generators/gorm/ -coverprofile=coverage.txt -covermode=atomic
+  - bash <(curl -s https://codecov.io/bash)
+  - go test -v ./substancegen/generators/gostruct/ -coverprofile=coverage.txt -covermode=atomic
+  - bash <(curl -s https://codecov.io/bash)

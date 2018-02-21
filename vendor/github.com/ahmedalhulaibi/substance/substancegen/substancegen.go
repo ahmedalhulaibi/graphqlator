@@ -9,9 +9,6 @@ type GeneratorInterface interface {
 	GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GenObjectType
 	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, genObjects map[string]GenObjectType) map[string]GenObjectType
 	OutputCodeFunc(dbType string, connectionString string, gqlObjectTypes map[string]GenObjectType) bytes.Buffer
-	GenObjectTypeToStringFunc(GenObjectType, *bytes.Buffer)
-	GenObjectPropertyToStringFunc(GenObjectProperty, *bytes.Buffer)
-	GenObjectTagToStringFunc(GenObjectTag, *bytes.Buffer)
 }
 
 /*SubstanceGenPlugins is a map storing a reference to the current plugins
@@ -30,6 +27,11 @@ Key: gorm
 Tabs: {'primary_key','column_name'}*/
 type GenObjectTag map[string][]string
 
+/*TODO: Create new type to store KeyType to map [string]string
+This will require changes in generators/graphqlgo pkg
+This will require changes in generators/gorm.go pkg + gorm_test.go
+This will require changes in generators/gostruct_test.go*/
+
 /*GenObjectProperty represents a property of an object (aka a field of a struct) */
 type GenObjectProperty struct {
 	ScalarName   string       `json:"scalarName"`
@@ -44,7 +46,7 @@ type GenObjectProperty struct {
 /*GenObjectProperties a type defining a map of GenObjectProperty
 Key: PropertyName
 Value: GenObjectProperty */
-type GenObjectProperties map[string]GenObjectProperty
+type GenObjectProperties map[string]*GenObjectProperty
 
 /*GenObjectType represents an object (aka a struct) */
 type GenObjectType struct {

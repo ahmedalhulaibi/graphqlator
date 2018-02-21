@@ -8,9 +8,9 @@ SubstanceGen provides an interface for implementations to use data produced by S
 
 ## Status
 
-| Build                             | Code coverage                           | Report card                           |
-| :-------------------------------: | :-------------------------------------: | :-----------------------------------: |
-| [![Build][build-badge]][build-link] | [![Code coverage][cov-badge]][cov-link] | [![Report card][rc-badge]][rc-link]   |
+| Build                             | Code coverage                           | Report card                           | Codebeat                           |
+| :-------------------------------: | :-------------------------------------: | :-----------------------------------: | :-----------------------------------: |
+| [![Build][build-badge]][build-link] | [![Code coverage][cov-badge]][cov-link] | [![Report card][rc-badge]][rc-link]   | [![Codebeat][codebeat-badge]][codebeat-link]   |
 
 [build-badge]: https://travis-ci.org/ahmedalhulaibi/substance.svg?branch=master "Travis-CI build status"
 [build-link]: https://travis-ci.org/ahmedalhulaibi/substance "Travis-CI build status link"
@@ -18,6 +18,8 @@ SubstanceGen provides an interface for implementations to use data produced by S
 [cov-link]: https://codecov.io/gh/ahmedalhulaibi/substance "Code coverage status"
 [rc-badge]: https://goreportcard.com/badge/github.com/ahmedalhulaibi/substance "Report card status"
 [rc-link]: https://goreportcard.com/report/github.com/ahmedalhulaibi/substance "Report card status"
+[codebeat-badge]: https://codebeat.co/badges/490b4031-5ae5-4fb5-bc46-b2c8802b944f
+[codebeat-link]: https://codebeat.co/projects/github-com-ahmedalhulaibi-substance-master
 
 ## Substance Supported Data Providers
 

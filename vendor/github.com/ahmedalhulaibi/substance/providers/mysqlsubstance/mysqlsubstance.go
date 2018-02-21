@@ -26,35 +26,21 @@ func (m mysql) GetCurrentDatabaseNameFunc(dbType string, connectionString string
 	if err != nil {
 		return "nil", err
 	}
-	rows, err := db.Query("SELECT DATABASE()")
-	if err != nil {
-		return "nil", err
-	}
 
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return "nil", err
-	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
+	queryResult := substance.ExecuteQuery(dbType, connectionString, "", GetCurrentDatabaseNameQuery)
+	if queryResult.Err != nil {
+		return "", queryResult.Err
 	}
 
 	var returnValue string
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
+	for queryResult.Rows.Next() {
+		err = queryResult.Rows.Scan(queryResult.ScanArgs...)
 		if err != nil {
 			return "nil", err
 		}
 
 		// Print data
-		for _, value := range values {
+		for _, value := range queryResult.Values {
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
@@ -80,24 +66,10 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query(DescribeDatabaseQuery)
-	if err != nil {
-		return nil, err
-	}
 
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
+	queryResult := substance.ExecuteQuery(dbType, connectionString, "", DescribeDatabaseQuery)
+	if queryResult.Err != nil {
+		return nil, queryResult.Err
 	}
 
 	columnDesc := []substance.ColumnDescription{}
@@ -108,19 +80,19 @@ func (m mysql) DescribeDatabaseFunc(dbType string, connectionString string) ([]s
 	}
 	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, PropertyType: "Table"}
 
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
+	for queryResult.Rows.Next() {
+		err = queryResult.Rows.Scan(queryResult.ScanArgs...)
 		if err != nil {
 			return nil, err
 		}
 
 		// Print data
-		for i, value := range values {
+		for i, value := range queryResult.Values {
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
 
-				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
+				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", queryResult.Columns[i], i)
 				return nil, error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
@@ -148,24 +120,9 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 		return nil, err
 	}
 	query := fmt.Sprintf(DescribeTableQuery, tableName)
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
+	queryResult := substance.ExecuteQuery(dbType, connectionString, "", query)
+	if queryResult.Err != nil {
+		return nil, queryResult.Err
 	}
 
 	columnDesc := []substance.ColumnDescription{}
@@ -174,26 +131,21 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 	if err != nil {
 		return nil, err
 	}
+
 	newColDesc := substance.ColumnDescription{DatabaseName: databaseName, TableName: tableName}
 
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
+	for queryResult.Rows.Next() {
+		err = queryResult.Rows.Scan(queryResult.ScanArgs...)
 		if err != nil {
 			return nil, err
 		}
 
 		// Print data
-		for i, value := range values {
+		for i, value := range queryResult.Values {
 			switch value.(type) {
-			case nil:
-				//IGNORE NIL VALUE
-				//fmt.Println("\t", columns[i], ": NULL")
-				//err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
-				//return nil, error(err)
 			case []byte:
-				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
-				switch columns[i] {
+				switch queryResult.Columns[i] {
 				case "Field":
 					newColDesc.PropertyName = string(value.([]byte))
 				case "Type":
@@ -233,47 +185,33 @@ func (m mysql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf(DescribeTableRelationshipQuery, databaseName, tableName)
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}
+	query := fmt.Sprintf(DescribeTableRelationshipQuery, databaseName)
 
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
+	queryResult := substance.ExecuteQuery(dbType, connectionString, tableName, query)
+	if queryResult.Err != nil {
+		return nil, queryResult.Err
 	}
 
 	columnRel := []substance.ColumnRelationship{}
 	newColRel := substance.ColumnRelationship{}
 
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
+	for queryResult.Rows.Next() {
+		err = queryResult.Rows.Scan(queryResult.ScanArgs...)
 		if err != nil {
 			return nil, err
 		}
 
 		// Print data
-		for i, value := range values {
+		for i, value := range queryResult.Values {
 			switch value.(type) {
 			case nil:
 				//fmt.Println("\t", columns[i], ": NULL")
-				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", columns[i], i)
+				err := fmt.Errorf("Null column value found at column: '%s' index: '%d'", queryResult.Columns[i], i)
 				return nil, error(err)
 			case []byte:
 				//fmt.Println("\t", columns[i], ": ", string(value.([]byte)))
 
-				switch columns[i] {
+				switch queryResult.Columns[i] {
 				case "TABLE_NAME":
 					newColRel.TableName = string(value.([]byte))
 				case "COLUMN_NAME":
@@ -301,46 +239,26 @@ func (m mysql) DescribeTableConstraintsFunc(dbType string, connectionString stri
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-	query := fmt.Sprintf(DescribeTableConstraintsQuery, tableName)
-	rows, err := db.Query(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	// Make a slice for the values
-	values := make([]interface{}, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
+	queryResult := substance.ExecuteQuery(dbType, connectionString, tableName, DescribeTableConstraintsQuery)
+	if queryResult.Err != nil {
+		return nil, queryResult.Err
 	}
 
 	columnCon := []substance.ColumnConstraint{}
 	newColCon := substance.ColumnConstraint{}
 
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
+	for queryResult.Rows.Next() {
+		err = queryResult.Rows.Scan(queryResult.ScanArgs...)
 		if err != nil {
 			return nil, err
 		}
 
 		// Print data
-		for i, value := range values {
+		for i, value := range queryResult.Values {
 			newColCon.TableName = tableName
 			switch value.(type) {
 			case []byte:
-				switch columns[i] {
+				switch queryResult.Columns[i] {
 				case "Column":
 					newColCon.ColumnName = string(value.([]byte))
 				case "Constraint":
