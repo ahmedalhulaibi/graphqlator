@@ -22,6 +22,10 @@ Graphqlator takes your existing database schema and generates code for a GraphQL
 
 ## Installation:
 
+```
+go get github.com/ahmedalhulaibi/graphqlator
+```
+
 Download prebuilt binaries from the [releases page](https://github.com/ahmedalhulaibi/go-graphqlator-cli/releases)
 
 ## Prerequisites
