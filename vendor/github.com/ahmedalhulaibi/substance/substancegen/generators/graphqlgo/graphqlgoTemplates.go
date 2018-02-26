@@ -23,10 +23,12 @@ rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: Fields}
 		log.Fatalf("failed to create new schema, error: %v", err)
 	}
 
-	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		result := executeQuery(r.URL.Query().Get("query"), schema)
-		json.NewEncoder(w).Encode(result)
+	gHandler := handler.New(&handler.Config{
+		Schema:   &schema,
+		Pretty:   true,
+		GraphiQL: true,
 	})
+	http.Handle("/graphql", gHandler)
 
 	fmt.Println("Now server is running on port 8080")
 	http.ListenAndServe(":8080", nil)

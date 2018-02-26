@@ -15,7 +15,7 @@
     "substancegen/generators/gostruct",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "67e34b7aa2812a14cf3d7ecb707b2ca17786efff"
+  revision = "b4d33c2a9e191767bcf6e2287ff82e883bfa6ca5"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -59,6 +59,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aadb88d65a9ecb9b1097b6f96a14d66be53b8f63e4f281cbb64af887654ef95d"
+  inputs-digest = "56e02ab02e2dc50f66782c22702f86e9107f73600c4cca8ae90588192bf28f4e"
   solver-name = "gps-cdcl"
   solver-version = 1

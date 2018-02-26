@@ -40,7 +40,7 @@ func (g Gql) AddJSONTagsToProperties(gqlObjectTypes map[string]substancegen.GenO
 }
 
 func (g Gql) GenPackageImports(dbType string, buff *bytes.Buffer) {
-	buff.WriteString("package main\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"log\"\n\t\"net/http\"\n\t\"github.com/graphql-go/graphql\"")
+	buff.WriteString("package main\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"log\"\n\t\"net/http\"\n\t\"github.com/graphql-go/graphql\"\n\t\"github.com/graphql-go/handler\"")
 
 	if importVal, exists := g.GraphqlDbTypeImports[dbType]; exists {
 		buff.WriteString(importVal)
