@@ -30,8 +30,6 @@ Or Download prebuilt binaries from the [releases page](https://github.com/ahmeda
 
 ## Prerequisites
 
-[goreturns](https://github.com/sqs/goreturns) - Generator uses goreturns to remove unnecessary generated imports
-
 [grahpql-go](https://github.com/graphql-go/graphql) - Generated code uses graphql-go
 
 [GORM](https://github.com/jinzhu/gorm) - Generated code uses GORM
@@ -45,7 +43,7 @@ Available Commands:
 ```
   init        Create a graphqlator-pkg.json file.
   describe    Describe database or table
-  generate    Generate GraphQL type schema from database table.
+  generate    Generate GraphQL-Go API implementation using grapqhlator-pkg.json.
   help        Help about any command
   version     Print the version number of Graphqlator
 ```
@@ -56,47 +54,7 @@ Use "graphqlator [command] --help" for more information about a command.
 
 ## Example Usage:
 
-### graphqlator init
-
-This command will walk you through the creation of a graphqlator-pkg.json file. This file can be edited after the fact.
-
-```
-graphqlator init
-Input project name (enter to continue): first-graphql-server
-Input database type e.g. mysql (enter to continue): mysql
-Input Database Connection String
-				MySql Example: username:password@tcp(localhost:3306)/schemaname
-				Postgresql Example: postgres://username:password@localhost:5432/dbname
-Input database connection string (enter to continue): ahmed:password@tcp(localhost:3306)/delivery
-Input git repo url (enter to continue): 
-Input table names - Must be EXACT spelling and case (enter without input to skip)
-Table #1 : Persons
-Table #2 : Orders
-Table #3 : AntiOrders
-Table #4 : 
-```
-#### graphqlator-pkg.json:
-```
-{
-    "project_name": "first-graphql-server",
-    "database_type": "mysql",
-    "connection_string": "ahmed:password@tcp(localhost:3306)/delivery",
-    "table_names": [
-        "Persons",
-        "Orders",
-        "AntiOrders"
-    ],
-    "git_repo": ""
-}
-```
-### graphqlator generate
-This command will use the information in graphqlator-pkg.json and generate two go files: 
-- dataTypes.go
-- main.go
-
-One bash file:
-- format.sh
-
+Please visit the [graphqlator website](https://ahmedalhulaibi.github.io/graphqlator-website/) for a short tutorial.
 
 # External Libraries Used
 [goreturns](https://github.com/sqs/goreturns) - Generator uses goreturns to remove unnecessary generated imports
