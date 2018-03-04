@@ -15,6 +15,6 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number of Graphqlator",
 	Long:  `All software has versions. This is Graphqlators's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Graphqlator GraphQL Generator v0.3.3-alpha")
+		fmt.Println("Graphqlator GraphQL Generator v0.3.6-alpha")
 	},
 }
