@@ -22,7 +22,6 @@ var updateGqlFields bool
 var updateGqlTypes bool
 var updateModel bool
 var updateMain bool
-var updateall bool
 
 func init() {
 	generate.Flags().BoolVarP(&updateSchema, "update-schema", "u", false, "update and overwrite schema.graphql")
@@ -48,9 +47,9 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 		if gqlPkg.GenMode == "graphql-go" {
 			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema && !updateMain {
-				updateall = true
+				cmd.Help()
 			}
-			if updateMain || updateall {
+			if updateMain {
 				mainFile := createFile("main.go", true)
 
 				var mainFileBuffer bytes.Buffer
@@ -64,7 +63,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				mainFile.Close()
 			}
 
-			if updateGqlTypes || updateall {
+			if updateGqlTypes {
 				graphqlTypesFile := createFile("graphqlTypes.go", true)
 
 				var graphqlTypesFileBuff bytes.Buffer
@@ -79,7 +78,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				graphqlTypesFile.Close()
 			}
 
-			if updateModel || updateall {
+			if updateModel {
 				dataModelFile := createFile("model.go", true)
 
 				var dataModelFileBuff bytes.Buffer
@@ -95,7 +94,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				dataModelFile.Close()
 			}
 
-			if updateGqlFields || updateall {
+			if updateGqlFields {
 				gqlFieldsFile := createFile("graphqlFields.go", true)
 
 				var gqlFieldsFileBuff bytes.Buffer
@@ -108,7 +107,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				gqlFieldsFile.Close()
 			}
 
-			if updateGormQueries || updateall {
+			if updateGormQueries {
 				gormQueriesFile := createFile("gormQueries.go", true)
 
 				var gormQueriesFileBuff bytes.Buffer
@@ -123,7 +122,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				gormQueriesFile.Close()
 			}
 
-			if updateSchema || updateall {
+			if updateSchema {
 				graphqlSchemaFile := createFile("schema.graphql", true)
 				graphqlSchemaFileBuffer := gqlGen.OutputGraphqlSchema(gqlObjectTypes)
 				_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
