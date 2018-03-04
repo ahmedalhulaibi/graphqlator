@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
 	"github.com/spf13/cobra"
@@ -32,12 +32,12 @@ func init() {
 	generate.Flags().BoolVarP(&updateMain, "update-main", "m", false, "update and overwrite main.go")
 	generate.Flags().BoolVarP(&updateModel, "update-all", "a", false, "update and overwrite all files")
 	RootCmd.AddCommand(generate)
-} 
+}
 
 var generate = &cobra.Command{
 	Use:   "generate",
-	Short: "Generate GraphQL type schema using grapqhlator-pkg.json.",
-	Long: `Generate GraphQL type schema from database information schema and tables defined in grapqhlator-pkg.json
+	Short: "Generate GraphQL-Go API implementation using grapqhlator-pkg.json.",
+	Long: `Generate GraphQL-Go API implementation from database information schema and tables defined in grapqhlator-pkg.json
 Run 'graphqlator init' before running 'graphqlator generate'`,
 	Args: cobra.MaximumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -164,7 +164,7 @@ func createFile(filepath string, overwrite bool) *os.File {
 	if err == nil {
 		if overwrite {
 			file.Close()
-			os.Remove(file.Name()) 
+			os.Remove(file.Name())
 		} else {
 			return file
 		}
