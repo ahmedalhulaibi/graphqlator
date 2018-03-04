@@ -104,12 +104,14 @@ Input database connection string (enter to continue): `)
 		}
 
 		{
-			fmt.Println("What graphql implementation will you be using? gqlgen or graphql-go?")
-			fmt.Println("gqlgen - https://github.com/vektah/gqlgen")
-			fmt.Println("graphql-go - https://github.com/graphql-go/graphql")
-			genMode, err := reader.ReadString('\n')
-			check(err, "Problem reading gen mode")
-			genMode = strings.Replace(genMode, "\n", "", -1)
+			genMode := "graphql-go"
+			//fmt.Println("Which graphql implementation will you be using? gqlgen or graphql-go?")
+			//fmt.Println("gqlgen - https://github.com/vektah/gqlgen")
+			//fmt.Println("graphql-go - https://github.com/graphql-go/graphql")
+			//genMode, err := reader.ReadString('\n')
+			//
+			//check(err, "Problem reading gen mode")
+			//genMode = strings.Replace(genMode, "\n", "", -1)
 			newGqlPackage.GenMode = genMode
 		}
 
