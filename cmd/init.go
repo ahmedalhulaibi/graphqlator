@@ -115,7 +115,7 @@ Input database connection string (enter to continue): `)
 			newGqlPackage.GenMode = genMode
 		}
 
-		newGqlPackageContent, err := json.Marshal(newGqlPackage)
+		newGqlPackageContent, err := json.MarshalIndent(newGqlPackage, "", "\t")
 		check(err, "Failed to encode JSON to byte string")
 		f.Write(newGqlPackageContent)
 
