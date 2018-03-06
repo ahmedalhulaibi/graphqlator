@@ -15,7 +15,7 @@
     "substancegen/generators/gostruct",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "b4d33c2a9e191767bcf6e2287ff82e883bfa6ca5"
+  revision = "928ab099c50f257fa1f4bc9a9e680a97ad30499d"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
