@@ -14,5 +14,5 @@ func init() {
 	regexDataTypePatterns["bigint.*"] = "int64"
 	regexDataTypePatterns["unsigned\\sbigint.*"] = "uint64"
 	regexDataTypePatterns["(unsigned\\s){0,1}(double.*|float.*|dec.*|numeric.*)"] = "float64"
-	regexDataTypePatterns["varchar.*|date.*|time.*|year.*|char.*|.*text.*|enum.*|set.*|.*blob.*|.*binary.*|json"] = "string"
+	regexDataTypePatterns["varchar.*|date.*|time.*|year.*|char.*|.*text.*|enum.*|set.*|.*blob.*|.*binary.*|json|jsonb"] = "string"
 }
