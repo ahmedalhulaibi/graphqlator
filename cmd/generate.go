@@ -22,6 +22,7 @@ var updateGqlFields bool
 var updateGqlTypes bool
 var updateModel bool
 var updateMain bool
+var updateAll bool
 
 func init() {
 	generate.Flags().BoolVarP(&updateSchema, "update-schema", "u", false, "update and overwrite schema.graphql")
@@ -29,7 +30,8 @@ func init() {
 	generate.Flags().BoolVarP(&updateGqlFields, "update-gqlFields", "g", false, "update and overwrite graphqlFields.go")
 	generate.Flags().BoolVarP(&updateGqlTypes, "update-gqlTypes", "t", false, "update and overwrite graphqlTypes.go")
 	generate.Flags().BoolVarP(&updateMain, "update-main", "m", false, "update and overwrite main.go")
-	generate.Flags().BoolVarP(&updateModel, "update-all", "a", false, "update and overwrite all files")
+	generate.Flags().BoolVarP(&updateModel, "update-gormStruct", "s", false, "update and overwrite model.go")
+	generate.Flags().BoolVarP(&updateAll, "update-all", "a", false, "update and overwrite all files")
 	RootCmd.AddCommand(generate)
 }
 
@@ -46,10 +48,10 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 		gqlGen.AddJSONTagsToProperties(gqlObjectTypes)
 
 		if gqlPkg.GenMode == "graphql-go" {
-			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema && !updateMain {
+			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema && !updateMain && !updateAll {
 				cmd.Help()
 			}
-			if updateMain {
+			if updateMain || updateAll {
 				mainFile := createFile("main.go", true)
 
 				var mainFileBuffer bytes.Buffer
@@ -63,7 +65,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				mainFile.Close()
 			}
 
-			if updateGqlTypes {
+			if updateGqlTypes || updateAll {
 				graphqlTypesFile := createFile("graphqlTypes.go", true)
 
 				var graphqlTypesFileBuff bytes.Buffer
@@ -78,7 +80,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				graphqlTypesFile.Close()
 			}
 
-			if updateModel {
+			if updateModel || updateAll {
 				dataModelFile := createFile("model.go", true)
 
 				var dataModelFileBuff bytes.Buffer
@@ -94,7 +96,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				dataModelFile.Close()
 			}
 
-			if updateGqlFields {
+			if updateGqlFields || updateAll {
 				gqlFieldsFile := createFile("graphqlFields.go", true)
 
 				var gqlFieldsFileBuff bytes.Buffer
@@ -107,7 +109,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				gqlFieldsFile.Close()
 			}
 
-			if updateGormQueries {
+			if updateGormQueries || updateAll {
 				gormQueriesFile := createFile("gormQueries.go", true)
 
 				var gormQueriesFileBuff bytes.Buffer
@@ -122,7 +124,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				gormQueriesFile.Close()
 			}
 
-			if updateSchema {
+			if updateSchema || updateAll {
 				graphqlSchemaFile := createFile("schema.graphql", true)
 				graphqlSchemaFileBuffer := gqlGen.OutputGraphqlSchema(gqlObjectTypes)
 				_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
