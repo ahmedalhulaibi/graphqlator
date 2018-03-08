@@ -1,9 +1,12 @@
 package graphqlgo
 
 import (
+	"fmt"
+
 	"github.com/ahmedalhulaibi/substance"
 	"github.com/ahmedalhulaibi/substance/substancegen"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/genutil"
+	"github.com/apex/log"
 	"github.com/jinzhu/inflection"
 )
 
@@ -152,61 +155,66 @@ func (g Gql) ResolveConstraintsFunc(dbType string, constraintDesc []substance.Co
 func (g Gql) ResolveForeignRefsFunc(dbType string, relationshipDesc []substance.ColumnRelationship, gqlObjectTypes map[string]substancegen.GenObjectType) {
 
 	for _, colRel := range relationshipDesc {
-		//replace the type info with the appropriate object
-		//Example:
-		//CREATE TABLE Persons (
-		// 	PersonID int PRIMARY KEY,
-		// 	LastName varchar(255),
-		// 	FirstName varchar(255),
-		// 	Address varchar(255),
-		// 	City varchar(255)
-		// );
-		// CREATE TABLE Orders (
-		// 	OrderID int UNIQUE NOT NULL,
-		// 	OrderNumber int NOT NULL,
-		// 	PersonID int DEFAULT NULL,
-		// 	PRIMARY KEY (OrderID),
-		// 	FOREIGN KEY (PersonID) REFERENCES Persons(PersonID)
-		// );
-		//
-		//The Person object would have an array of Order objects to reflect the one-to-many relationship
-		//Add a new property to table
-		//Persons have many orders
-		isUnique := (genutil.StringInSlice("u", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || genutil.StringInSlice("UNIQUE", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
-		isPrimary := (genutil.StringInSlice("p", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || genutil.StringInSlice("PRIMARY KEY", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
-		isForeign := (genutil.StringInSlice("f", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || genutil.StringInSlice("FOREIGN KEY", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
+		if _, ok := gqlObjectTypes[colRel.TableName]; ok {
 
-		if isForeign && !isPrimary && !isUnique {
-			gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
-			gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
-			newGqlObjProperty := substancegen.GenObjectProperty{
-				ScalarName:   colRel.TableName,
-				ScalarType:   inflection.Singular(colRel.TableName),
-				Nullable:     true,
-				IsList:       true,
-				IsObjectType: true,
-			}
-			newGqlObjProperty.Tags = make(substancegen.GenObjectTag)
-			if g.GraphqlDbTypeGormFlag[dbType] {
-				newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
-			}
-			gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = &newGqlObjProperty
-		} else if (isUnique || isPrimary) && isForeign {
-			gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
-			gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
-			newGqlObjProperty := substancegen.GenObjectProperty{
-				ScalarName:   inflection.Singular(colRel.TableName),
-				ScalarType:   inflection.Singular(colRel.TableName),
-				Nullable:     true,
-				IsList:       false,
-				IsObjectType: true,
-			}
-			newGqlObjProperty.Tags = make(substancegen.GenObjectTag)
-			if g.GraphqlDbTypeGormFlag[dbType] {
-				newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
-			}
-			gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = &newGqlObjProperty
+			//replace the type info with the appropriate object
+			//Example:
+			//CREATE TABLE Persons (
+			// 	PersonID int PRIMARY KEY,
+			// 	LastName varchar(255),
+			// 	FirstName varchar(255),
+			// 	Address varchar(255),
+			// 	City varchar(255)
+			// );
+			// CREATE TABLE Orders (
+			// 	OrderID int UNIQUE NOT NULL,
+			// 	OrderNumber int NOT NULL,
+			// 	PersonID int DEFAULT NULL,
+			// 	PRIMARY KEY (OrderID),
+			// 	FOREIGN KEY (PersonID) REFERENCES Persons(PersonID)
+			// );
+			//
+			//The Person object would have an array of Order objects to reflect the one-to-many relationship
+			//Add a new property to table
+			//Persons have many orders
+			isUnique := (genutil.StringInSlice("u", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || genutil.StringInSlice("UNIQUE", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
+			isPrimary := (genutil.StringInSlice("p", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || genutil.StringInSlice("PRIMARY KEY", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
+			isForeign := (genutil.StringInSlice("f", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || genutil.StringInSlice("FOREIGN KEY", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
 
+			if isForeign && !isPrimary && !isUnique {
+				gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
+				gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
+				newGqlObjProperty := substancegen.GenObjectProperty{
+					ScalarName:   colRel.TableName,
+					ScalarType:   inflection.Singular(colRel.TableName),
+					Nullable:     true,
+					IsList:       true,
+					IsObjectType: true,
+				}
+				newGqlObjProperty.Tags = make(substancegen.GenObjectTag)
+				if g.GraphqlDbTypeGormFlag[dbType] {
+					newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
+				}
+				gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = &newGqlObjProperty
+			} else if (isUnique || isPrimary) && isForeign {
+				gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
+				gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
+				newGqlObjProperty := substancegen.GenObjectProperty{
+					ScalarName:   inflection.Singular(colRel.TableName),
+					ScalarType:   inflection.Singular(colRel.TableName),
+					Nullable:     true,
+					IsList:       false,
+					IsObjectType: true,
+				}
+				newGqlObjProperty.Tags = make(substancegen.GenObjectTag)
+				if g.GraphqlDbTypeGormFlag[dbType] {
+					newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
+				}
+				gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = &newGqlObjProperty
+
+			}
+		} else {
+			log.Errorf(fmt.Sprintf("%s Table definition not found in ResolveForeignRefsFunc gqlObjectTypes", colRel.TableName))
 		}
 	}
 }
