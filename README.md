@@ -1,6 +1,6 @@
 # Graphqlator CLI
 __*This project is a WIP.*__
-# Master branch is currently unstable. Postgres code generation not working as intended.
+# Master branch is currently unstable.
 
 Graphqlator takes your existing database schema and generates code for a GraphQL-Go server. Type 'graphqlator help' to see usage.
 
