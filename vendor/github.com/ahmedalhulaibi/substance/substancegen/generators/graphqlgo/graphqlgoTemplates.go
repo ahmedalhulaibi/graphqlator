@@ -16,7 +16,7 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 
 /*GraphqlGoMainConfig boilerplate string to setup graphl-go and http handler*/
 var GraphqlGoMainConfig = `
-rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: Fields}
+	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: Fields}
 	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
 	schema, err := graphql.NewSchema(schemaConfig)
 	if err != nil {

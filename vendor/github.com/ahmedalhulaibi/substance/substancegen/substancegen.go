@@ -34,13 +34,14 @@ This will require changes in generators/gostruct_test.go*/
 
 /*GenObjectProperty represents a property of an object (aka a field of a struct) */
 type GenObjectProperty struct {
-	ScalarName   string       `json:"scalarName"`
-	ScalarType   string       `json:"scalarType"`
-	IsList       bool         `json:"isList"`
-	Nullable     bool         `json:"nullable"`
-	KeyType      []string     `json:"keyType"`
-	Tags         GenObjectTag `json:"tags"`
-	IsObjectType bool         `json:"isObjectType"`
+	ScalarName      string `json:"scalarName"`
+	ScalarNameUpper string
+	ScalarType      string       `json:"scalarType"`
+	IsList          bool         `json:"isList"`
+	Nullable        bool         `json:"nullable"`
+	KeyType         []string     `json:"keyType"`
+	Tags            GenObjectTag `json:"tags"`
+	IsObjectType    bool         `json:"isObjectType"`
 }
 
 /*GenObjectProperties a type defining a map of GenObjectProperty
@@ -50,8 +51,10 @@ type GenObjectProperties map[string]*GenObjectProperty
 
 /*GenObjectType represents an object (aka a struct) */
 type GenObjectType struct {
-	Name       string              `json:"objectName"`
-	Properties GenObjectProperties `json:"properties"`
+	Name            string `json:"objectName"`
+	SourceTableName string `json:"sourceTableName"`
+	LowerName       string
+	Properties      GenObjectProperties `json:"properties"`
 }
 
 /*Generate is a one stop function to quickly generate code */

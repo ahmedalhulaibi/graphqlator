@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/genutil"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
@@ -45,7 +46,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 		gqlPkg := getGraphqlatorPkgFile()
 		gqlGen := substancegen.SubstanceGenPlugins["graphql-go"].(graphqlgo.Gql)
 		gqlObjectTypes := gqlGen.GetObjectTypesFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlPkg.TableNames)
-		gqlGen.AddJSONTagsToProperties(gqlObjectTypes)
+		genutil.AddJSONTagsToProperties(gqlObjectTypes)
 
 		if gqlPkg.GenMode == "graphql-go" {
 			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema && !updateMain && !updateAll {
@@ -57,7 +58,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				var mainFileBuffer bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &mainFileBuffer)
 				mainFileBuffer.WriteString(graphqlgo.GraphqlGoExecuteQueryFunc)
-				gqlGen.GenGraphqlGoMainFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlObjectTypes, &mainFileBuffer)
+				graphqlgo.GenGraphqlGoMainFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlObjectTypes, &mainFileBuffer)
 				_, err := mainFile.Write(mainFileBuffer.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
@@ -101,7 +102,9 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 				var gqlFieldsFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gqlFieldsFileBuff)
-				gqlGen.GenGraphqlGoRootQueryFunc(gqlObjectTypes, &gqlFieldsFileBuff)
+
+				gqlFieldsFileBufferTemp := graphqlgo.GenGraphqlGoFieldsFunc(gqlObjectTypes)
+				gqlFieldsFileBuff.Write(gqlFieldsFileBufferTemp.Bytes())
 				_, err := gqlFieldsFile.Write(gqlFieldsFileBuff.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
@@ -126,7 +129,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 			if updateSchema || updateAll {
 				graphqlSchemaFile := createFile("schema.graphql", true)
-				graphqlSchemaFileBuffer := gqlGen.OutputGraphqlSchema(gqlObjectTypes)
+				graphqlSchemaFileBuffer := graphqlgo.OutputGraphqlSchema(gqlObjectTypes)
 				_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
