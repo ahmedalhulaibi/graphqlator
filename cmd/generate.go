@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/ahmedalhulaibi/substance/substancegen/generators/genutil"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
@@ -45,8 +44,8 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 	Run: func(cmd *cobra.Command, args []string) {
 		gqlPkg := getGraphqlatorPkgFile()
 		gqlGen := substancegen.SubstanceGenPlugins["graphql-go"].(graphqlgo.Gql)
-		gqlObjectTypes := gqlGen.GetObjectTypesFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlPkg.TableNames)
-		genutil.AddJSONTagsToProperties(gqlObjectTypes)
+		gqlObjectTypes := substancegen.GetObjectTypesFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlPkg.TableNames)
+		substancegen.AddJSONTagsToProperties(gqlObjectTypes)
 
 		if gqlPkg.GenMode == "graphql-go" {
 			if !updateGormQueries && !updateGqlFields && !updateGqlTypes && !updateModel && !updateSchema && !updateMain && !updateAll {

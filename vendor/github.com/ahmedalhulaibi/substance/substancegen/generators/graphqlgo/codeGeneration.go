@@ -8,32 +8,10 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/ahmedalhulaibi/substance/substancegen/generators/genutil"
-	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
-	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
-
 	"github.com/jinzhu/inflection"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
 )
-
-func (g Gql) OutputCodeFunc(dbType string, connectionString string, gqlObjectTypes map[string]substancegen.GenObjectType) bytes.Buffer {
-	var buff bytes.Buffer
-
-	g.GenPackageImports(dbType, &buff)
-	//print schema
-	genutil.AddJSONTagsToProperties(gqlObjectTypes)
-	for _, value := range gqlObjectTypes {
-		gostruct.GenObjectTypeToStructFunc(value, &buff)
-		gorm.GenGormObjectTableNameOverrideFunc(value, &buff)
-		g.GenGraphqlGoTypeFunc(value, &buff)
-	}
-	buff.WriteString(GraphqlGoExecuteQueryFunc)
-	graphqlFieldsBuff := GenGraphqlGoFieldsFunc(gqlObjectTypes)
-	buff.Write(graphqlFieldsBuff.Bytes())
-	GenGraphqlGoMainFunc(dbType, connectionString, gqlObjectTypes, &buff)
-	return buff
-}
 
 func (g Gql) GenPackageImports(dbType string, buff *bytes.Buffer) {
 	buff.WriteString("package main\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"log\"\n\t\"net/http\"\n\t\"github.com/graphql-go/graphql\"\n\t\"github.com/graphql-go/handler\"")

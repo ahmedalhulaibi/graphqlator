@@ -2,12 +2,16 @@ package substancegen
 
 import (
 	"bytes"
+	"fmt"
+	"unicode"
+
+	"github.com/ahmedalhulaibi/substance"
+	"github.com/apex/log"
+	"github.com/jinzhu/inflection"
 )
 
 /*GeneratorInterface describes the implementation required to generate code from substance objects*/
 type GeneratorInterface interface {
-	GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GenObjectType
-	ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, genObjects map[string]GenObjectType) map[string]GenObjectType
 	OutputCodeFunc(dbType string, connectionString string, gqlObjectTypes map[string]GenObjectType) bytes.Buffer
 }
 
@@ -59,5 +63,193 @@ type GenObjectType struct {
 
 /*Generate is a one stop function to quickly generate code */
 func Generate(generatorName string, dbType string, connectionString string, tableNames []string) bytes.Buffer {
-	return SubstanceGenPlugins[generatorName].OutputCodeFunc(dbType, connectionString, SubstanceGenPlugins[generatorName].GetObjectTypesFunc(dbType, connectionString, tableNames))
+	return SubstanceGenPlugins[generatorName].OutputCodeFunc(dbType, connectionString, GetObjectTypesFunc(dbType, connectionString, tableNames))
+}
+
+/*GetObjectTypesFunc*/
+func GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GenObjectType {
+	//init array of column descriptions for all tables
+	tableDesc := []substance.ColumnDescription{}
+
+	//init array of graphql types
+	gqlObjectTypes := make(map[string]GenObjectType)
+
+	//for each table name add a new graphql type and init its properties
+	for _, tableName := range tableNames {
+		a := []rune(inflection.Singular(tableName))
+		a[0] = unicode.ToUpper(a[0])
+		genObjectTypeNameUpper := string(a)
+		a[0] = unicode.ToLower(a[0])
+		genObjectTypeNameLower := string(a)
+		newGqlObj := GenObjectType{Name: genObjectTypeNameUpper, LowerName: genObjectTypeNameLower, SourceTableName: tableName}
+		newGqlObj.Properties = make(GenObjectProperties)
+		gqlObjectTypes[tableName] = newGqlObj
+		//describe each table
+		_results, err := substance.DescribeTable(dbType, connectionString, tableName)
+		if err != nil {
+			panic(err)
+		}
+		//append results to tableDesc
+		tableDesc = append(tableDesc, _results...)
+	}
+
+	//map types
+	for _, colDesc := range tableDesc {
+		a := []rune(inflection.Singular(colDesc.PropertyName))
+		a[0] = unicode.ToUpper(a[0])
+		colDescPropNameUpper := string(a)
+		newGqlObjProperty := GenObjectProperty{
+			ScalarName:      colDesc.PropertyName,
+			ScalarNameUpper: colDescPropNameUpper,
+			ScalarType:      colDesc.PropertyType,
+			Nullable:        colDesc.Nullable,
+			KeyType:         []string{""},
+		}
+		newGqlObjProperty.Tags = make(GenObjectTag)
+		newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], "column:"+newGqlObjProperty.ScalarName+";")
+
+		gqlObjectTypes[colDesc.TableName].Properties[colDesc.PropertyName] = &newGqlObjProperty
+	}
+	//resolve relationships
+	gqlObjectTypes = ResolveRelationshipsFunc(dbType,
+		connectionString,
+		tableNames,
+		gqlObjectTypes)
+
+	return gqlObjectTypes
+}
+
+func ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjectTypes map[string]GenObjectType) map[string]GenObjectType {
+	relationshipDesc := []substance.ColumnRelationship{}
+	constraintDesc := []substance.ColumnConstraint{}
+
+	for _, tableName := range tableNames {
+		relResults, err := substance.DescribeTableRelationship(dbType, connectionString, tableName)
+
+		if err != nil {
+			panic(err)
+		}
+		relationshipDesc = append(relationshipDesc, relResults...)
+
+		constraintResults, err := substance.DescribeTableConstraints(dbType, connectionString, tableName)
+
+		if err != nil {
+			panic(err)
+		}
+		constraintDesc = append(constraintDesc, constraintResults...)
+
+		ResolveConstraintsFunc(dbType, constraintDesc, gqlObjectTypes)
+	}
+
+	ResolveForeignRefsFunc(dbType, relationshipDesc, gqlObjectTypes)
+	return gqlObjectTypes
+}
+
+func ResolveConstraintsFunc(dbType string, constraintDesc []substance.ColumnConstraint, gqlObjectTypes map[string]GenObjectType) {
+	for _, constraint := range constraintDesc {
+		gqlKeyTypes := &gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType
+		gqlTags := &gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].Tags
+		//fmt.Println("GQL Key Type ", constraint.TableName, constraint.ColumnName, gqlKeyTypes)
+		for _, gqlKeyType := range *gqlKeyTypes {
+			switch {
+			case gqlKeyType == "" || gqlKeyType == " ":
+				gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType = []string{constraint.ConstraintType}
+				isPrimary := (StringInSlice("p", gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType) ||
+					StringInSlice("PRIMARY KEY", gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType))
+				if isPrimary {
+					(*gqlTags)["gorm"] = append((*gqlTags)["gorm"], "primary_key"+";")
+				}
+			case gqlKeyType == "p" || gqlKeyType == "PRIMARY KEY":
+				if constraint.ConstraintType == "f" || constraint.ConstraintType == "FOREIGN KEY" {
+					gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType = append(gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType, "f")
+				}
+			case gqlKeyType == "u" || gqlKeyType == "UNIQUE":
+				if constraint.ConstraintType == "f" || constraint.ConstraintType == "FOREIGN KEY" {
+					gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType = append(gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType, "f")
+				}
+			case gqlKeyType == "f" || gqlKeyType == "FOREIGN KEY":
+				if constraint.ConstraintType == "p" || constraint.ConstraintType == "PRIMARY KEY" {
+					gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType = append(gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType, "p")
+
+				} else if constraint.ConstraintType == "u" || constraint.ConstraintType == "UNIQUE" {
+					gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType = append(gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType, "u")
+
+				}
+			}
+		}
+
+	}
+}
+
+func ResolveForeignRefsFunc(dbType string, relationshipDesc []substance.ColumnRelationship, gqlObjectTypes map[string]GenObjectType) {
+	for _, colRel := range relationshipDesc {
+		_, colRelTableOk := gqlObjectTypes[colRel.TableName]
+		_, colRelRefTableOk := gqlObjectTypes[colRel.ReferenceTableName]
+		if colRelTableOk && colRelRefTableOk {
+
+			//replace the type info with the appropriate object
+			//Example:
+			//CREATE TABLE Persons (
+			// 	PersonID int PRIMARY KEY,
+			// 	LastName varchar(255),
+			// 	FirstName varchar(255),
+			// 	Address varchar(255),
+			// 	City varchar(255)
+			// );
+			// CREATE TABLE Orders (
+			// 	OrderID int UNIQUE NOT NULL,
+			// 	OrderNumber int NOT NULL,
+			// 	PersonID int DEFAULT NULL,
+			// 	PRIMARY KEY (OrderID),
+			// 	FOREIGN KEY (PersonID) REFERENCES Persons(PersonID)
+			// );
+			//
+			//The Person object would have an array of Order objects to reflect the one-to-many relationship
+			//Add a new property to table
+			//Persons have many orders
+			isUnique := (StringInSlice("u", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || StringInSlice("UNIQUE", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
+			isPrimary := (StringInSlice("p", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || StringInSlice("PRIMARY KEY", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
+			isForeign := (StringInSlice("f", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType) || StringInSlice("FOREIGN KEY", gqlObjectTypes[colRel.TableName].Properties[colRel.ColumnName].KeyType))
+
+			if isForeign && !isPrimary && !isUnique {
+				gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
+				gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
+				newGqlObjProperty := GenObjectProperty{
+					ScalarName:      inflection.Plural(gqlObjectTypes[colRel.TableName].Name),
+					ScalarNameUpper: inflection.Plural(gqlObjectTypes[colRel.TableName].Name),
+					ScalarType:      gqlObjectTypes[colRel.TableName].Name,
+					Nullable:        true,
+					IsList:          true,
+					IsObjectType:    true,
+				}
+				newGqlObjProperty.Tags = make(GenObjectTag)
+				newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
+
+				gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = &newGqlObjProperty
+			} else if (isUnique || isPrimary) && isForeign {
+				gormTagForeign := "ForeignKey:" + colRel.ColumnName + ";"
+				gormTagAssociationForeign := "AssociationForeignKey:" + colRel.ReferenceColumnName + ";"
+				newGqlObjProperty := GenObjectProperty{
+					ScalarName:      gqlObjectTypes[colRel.TableName].Name,
+					ScalarNameUpper: gqlObjectTypes[colRel.TableName].Name,
+					ScalarType:      gqlObjectTypes[colRel.TableName].Name,
+					Nullable:        true,
+					IsList:          false,
+					IsObjectType:    true,
+				}
+				newGqlObjProperty.Tags = make(GenObjectTag)
+				newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
+				gqlObjectTypes[colRel.ReferenceTableName].Properties[colRel.TableName] = &newGqlObjProperty
+
+			}
+		}
+
+		if !colRelTableOk {
+			log.Errorf(fmt.Sprintf("%s Table definition not found in ResolveForeignRefsFunc gqlObjectTypes", colRel.TableName))
+		}
+
+		if !colRelRefTableOk {
+			log.Errorf(fmt.Sprintf("%s Table definition not found in ResolveForeignRefsFunc gqlObjectTypes", colRel.ReferenceTableName))
+		}
+	}
 }

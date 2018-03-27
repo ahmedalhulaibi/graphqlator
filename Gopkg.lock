@@ -10,12 +10,11 @@
     "providers/pgsqlsubstance",
     "providers/testsubstance",
     "substancegen",
-    "substancegen/generators/genutil",
     "substancegen/generators/gorm",
     "substancegen/generators/gostruct",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "8b0faa4c36d7cd4788c3b3570a45732d400265c6"
+  revision = "3ff25f0ddc59b393dc830a71e98cd46be96c2478"
 
 [[projects]]
   name = "github.com/apex/log"

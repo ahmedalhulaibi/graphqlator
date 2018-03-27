@@ -2,13 +2,10 @@ package gorm
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"text/template"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
-	"github.com/ahmedalhulaibi/substance/substancegen/generators/genutil"
-	"github.com/jinzhu/inflection"
 )
 
 /*GenGormObjectTableNameOverrideFunc generates a function to override the GORM default table name
@@ -62,52 +59,37 @@ func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes
 
 /*GenObjectGormUpdateFunc generates functions for basic CRUD Update using gorm and writes it to a buffer*/
 func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gqlObjectTypeNameSingular := inflection.Singular(gqlObjectType.Name)
-	var primaryKeyColumn string
+	primaryKeyColumn := ""
 	for _, propVal := range gqlObjectType.Properties {
-		if genutil.StringInSlice("p", propVal.KeyType) || genutil.StringInSlice("PRIMARY KEY", propVal.KeyType) {
+		if substancegen.StringInSlice("p", propVal.KeyType) || substancegen.StringInSlice("PRIMARY KEY", propVal.KeyType) {
+			primaryKeyColumn = propVal.ScalarNameUpper
+			break
+		}
+		if substancegen.StringInSlice("u", propVal.KeyType) || substancegen.StringInSlice("UNIQUE", propVal.KeyType) {
 			primaryKeyColumn = propVal.ScalarNameUpper
 			break
 		}
 	}
-
-	buff.WriteString(fmt.Sprintf("\n\nfunc Update%s (db *gorm.DB, old%s %s, new%s %s, result%s *%s) {\n\tvar oldResult%s %s\n\tdb.Where(&old%s).First(&oldResult%s)\n\tif oldResult%s.%s == new%s.%s {\n\t\toldResult%s = new%s\n\t\tdb.Save(oldResult%s)\n\t}\n\tGet%s(db, new%s, result%s)\n}",
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
+	var templateData = struct {
+		Name string
+		Key  string
+	}{
+		gqlObjectType.Name,
 		primaryKeyColumn,
-		gqlObjectTypeNameSingular,
-		primaryKeyColumn,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular,
-		gqlObjectTypeNameSingular))
+	}
 
-	//primaryKeyTemplate := "{{define "pkTemplate"}}{{range .Properties}}{{range .KeyType}}{{if . == \"p\" || . == \"PRIMARY KEY\"}}{{.}}{{end}}{{end}}{{end}}{{end}}"
-
-	// gormUpdateFuncTemplate := "\n\nfunc Update{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}, new{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tvar oldResult{{.Name}} {{.Name}}\n\tdb.Where(&old{{.Name}}).First(&oldResult{{.Name}})\n\tif oldResult{{.Name}}.%s == new{{.Name}}.%s {\n\t\toldResult{{.Name}} = new{{.Name}}\n\t\tdb.Save(oldResult{{.Name}})\n\t}\n\tGet{{.Name}}(db, new{{.Name}}, result{{.Name}})\n}"
-	// tmpl := template.New("gormUpdateFunc")
-	// tmpl, err := tmpl.Parse(gormUpdateFuncTemplate)
-	// if err != nil {
-	// 	log.Fatal("Parse: ", err)
-	// 	return
-	// }
-	// err1 := tmpl.Execute(buff, gqlObjectType)
-	// if err1 != nil {
-	// 	log.Fatal("Execute: ", err1)
-	// 	return
-	// }
+	gormUpdateFuncTemplate := "\n\nfunc Update{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}, new{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tvar oldResult{{.Name}} {{.Name}}\n\tdb.Where(&old{{.Name}}).First(&oldResult{{.Name}})\n\tif oldResult{{.Name}}.{{.Key}} == new{{.Name}}.{{.Key}} {\n\t\toldResult{{.Name}} = new{{.Name}}\n\t\tdb.Save(oldResult{{.Name}})\n\t}\n\tGet{{.Name}}(db, new{{.Name}}, result{{.Name}})\n}"
+	tmpl := template.New("gormUpdateFunc")
+	tmpl, err := tmpl.Parse(gormUpdateFuncTemplate)
+	if err != nil {
+		log.Fatal("Parse: ", err)
+		return
+	}
+	err1 := tmpl.Execute(buff, templateData)
+	if err1 != nil {
+		log.Fatal("Execute: ", err1)
+		return
+	}
 }
 
 /*GenObjectGormDeleteFunc generates functions for basic CRUD Delete using gorm and writes it to a buffer*/

@@ -1,6 +1,6 @@
 # substance
 
-_This project is a work in progress._
+_This project is a work in progress. This means the master branch is unstable and broken builds may occur._ 
 
 Substance provides an interface for implementations extract schema data from a data provider (mysql, postgres, etc.).
 
