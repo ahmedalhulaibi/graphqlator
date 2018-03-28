@@ -40,7 +40,8 @@ This will require changes in generators/gostruct_test.go*/
 type GenObjectProperty struct {
 	ScalarName      string `json:"scalarName"`
 	ScalarNameUpper string
-	ScalarType      string       `json:"scalarType"`
+	ScalarType      string `json:"scalarType"`
+	AltScalarType   string
 	IsList          bool         `json:"isList"`
 	Nullable        bool         `json:"nullable"`
 	KeyType         []string     `json:"keyType"`

@@ -3,6 +3,7 @@ package gorm
 import (
 	"bytes"
 	"log"
+	"sort"
 	"text/template"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
@@ -59,23 +60,26 @@ func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes
 
 /*GenObjectGormUpdateFunc generates functions for basic CRUD Update using gorm and writes it to a buffer*/
 func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	primaryKeyColumn := ""
-	for _, propVal := range gqlObjectType.Properties {
-		if substancegen.StringInSlice("p", propVal.KeyType) || substancegen.StringInSlice("PRIMARY KEY", propVal.KeyType) {
-			primaryKeyColumn = propVal.ScalarNameUpper
-			break
-		}
-		if substancegen.StringInSlice("u", propVal.KeyType) || substancegen.StringInSlice("UNIQUE", propVal.KeyType) {
-			primaryKeyColumn = propVal.ScalarNameUpper
+	searchKeyTypes := []string{"p", "PRIMARY KEY", "u", "UNIQUE"}
+	keyColumn := ""
+	for _, searchKeyType := range searchKeyTypes {
+		keyColumn = SearchForKeyColumnByKeyType(gqlObjectType, searchKeyType)
+		if keyColumn != "" {
 			break
 		}
 	}
+
+	if keyColumn == "" {
+		log.Printf("No primary or unique key column found for object %s. Skipping Gorm update func.\n", gqlObjectType.Name)
+		return
+	}
+
 	var templateData = struct {
 		Name string
 		Key  string
 	}{
 		gqlObjectType.Name,
-		primaryKeyColumn,
+		keyColumn,
 	}
 
 	gormUpdateFuncTemplate := "\n\nfunc Update{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}, new{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tvar oldResult{{.Name}} {{.Name}}\n\tdb.Where(&old{{.Name}}).First(&oldResult{{.Name}})\n\tif oldResult{{.Name}}.{{.Key}} == new{{.Name}}.{{.Key}} {\n\t\toldResult{{.Name}} = new{{.Name}}\n\t\tdb.Save(oldResult{{.Name}})\n\t}\n\tGet{{.Name}}(db, new{{.Name}}, result{{.Name}})\n}"
@@ -90,6 +94,26 @@ func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 		log.Fatal("Execute: ", err1)
 		return
 	}
+}
+
+/*SearchForKeyColumnByKeyType returns a string containing the name of the column of a certain key type*/
+func SearchForKeyColumnByKeyType(gqlObjectType substancegen.GenObjectType, searchKeyType string) string {
+	keyColumn := ""
+	//Loop through all properties in alphabetic order (key sorted)
+	//This prevents different keys being identified across multiple runs using the same input data
+	propKeys := make([]string, 0)
+	for propKey := range gqlObjectType.Properties {
+		propKeys = append(propKeys, propKey)
+	}
+	sort.Strings(propKeys)
+	for _, propKey := range propKeys {
+		propVal := gqlObjectType.Properties[propKey]
+		if substancegen.StringInSlice(searchKeyType, propVal.KeyType) {
+			keyColumn = propVal.ScalarNameUpper
+			break
+		}
+	}
+	return keyColumn
 }
 
 /*GenObjectGormDeleteFunc generates functions for basic CRUD Delete using gorm and writes it to a buffer*/
@@ -117,4 +141,17 @@ func GenObjectGormCrud(gqlObjectType substancegen.GenObjectType, buff *bytes.Buf
 	GenObjectGormUpdateFunc(gqlObjectType, buff)
 
 	GenObjectGormDeleteFunc(gqlObjectType, buff)
+}
+
+/*GenObjectsGormCrud processes gqlObjectTypes map in sorted key order and calls GenObjectGormCrud
+This is done to produce predictable output*/
+func GenObjectsGormCrud(gqlObjectTypes map[string]substancegen.GenObjectType, buff *bytes.Buffer) {
+	keys := make([]string, 0)
+	for key := range gqlObjectTypes {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		GenObjectGormCrud(gqlObjectTypes[key], buff)
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"sort"
 
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
@@ -70,9 +71,8 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 				var graphqlTypesFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &graphqlTypesFileBuff)
-				for _, value := range gqlObjectTypes {
-					gqlGen.GenGraphqlGoTypeFunc(value, &graphqlTypesFileBuff)
-				}
+				gqlGen.GenerateGraphqlGoTypesFunc(gqlObjectTypes, &graphqlTypesFileBuff)
+
 				_, err := graphqlTypesFile.Write(graphqlTypesFileBuff.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
@@ -85,9 +85,14 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 				var dataModelFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &dataModelFileBuff)
-				for _, value := range gqlObjectTypes {
-					gostruct.GenObjectTypeToStructFunc(value, &dataModelFileBuff)
-					gorm.GenGormObjectTableNameOverrideFunc(value, &dataModelFileBuff)
+				gostruct.GenObjectTypeToStructFunc(gqlObjectTypes, &dataModelFileBuff)
+				keys := make([]string, 0)
+				for key := range gqlObjectTypes {
+					keys = append(keys, key)
+				}
+				sort.Strings(keys)
+				for _, key := range keys {
+					gorm.GenGormObjectTableNameOverrideFunc(gqlObjectTypes[key], &dataModelFileBuff)
 				}
 				_, err := dataModelFile.Write(dataModelFileBuff.Bytes())
 				if err != nil {
@@ -116,9 +121,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 				var gormQueriesFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gormQueriesFileBuff)
-				for _, value := range gqlObjectTypes {
-					gorm.GenObjectGormCrud(value, &gormQueriesFileBuff)
-				}
+				gorm.GenObjectsGormCrud(gqlObjectTypes, &gormQueriesFileBuff)
 				_, err := gormQueriesFile.Write(gormQueriesFileBuff.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
