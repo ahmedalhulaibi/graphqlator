@@ -11,6 +11,7 @@ import (
 
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gorm"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/gostruct"
+	"github.com/ahmedalhulaibi/substance/substancegen/generators/gqlschema"
 	"github.com/ahmedalhulaibi/substance/substancegen/generators/graphqlgo"
 
 	"github.com/ahmedalhulaibi/substance/substancegen"
@@ -107,8 +108,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				var gqlFieldsFileBuff bytes.Buffer
 				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gqlFieldsFileBuff)
 
-				gqlFieldsFileBufferTemp := graphqlgo.GenGraphqlGoFieldsFunc(gqlObjectTypes)
-				gqlFieldsFileBuff.Write(gqlFieldsFileBufferTemp.Bytes())
+				graphqlgo.GenGraphqlGoFieldsFunc(gqlObjectTypes, &gqlFieldsFileBuff)
 				_, err := gqlFieldsFile.Write(gqlFieldsFileBuff.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
@@ -131,7 +131,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 
 			if updateSchema || updateAll {
 				graphqlSchemaFile := createFile("schema.graphql", true)
-				graphqlSchemaFileBuffer := graphqlgo.OutputGraphqlSchema(gqlObjectTypes)
+				graphqlSchemaFileBuffer := gqlschema.OutputGraphqlSchema(gqlObjectTypes)
 				_, err := graphqlSchemaFile.Write(graphqlSchemaFileBuffer.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())

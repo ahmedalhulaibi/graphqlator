@@ -12,6 +12,7 @@
     "substancegen",
     "substancegen/generators/gorm",
     "substancegen/generators/gostruct",
+    "substancegen/generators/gqlschema",
     "substancegen/generators/graphqlgo"
   ]
   revision = "208a20383b88ccb80592d9411683625ba8b273a2"
@@ -70,6 +71,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "906fcfaafea1f8c9bd614c821c66aaf15b3ce4064d8c3bf68c097b98c28e1181"
+  inputs-digest = "79ab68c39de52a117b705dec713d08d6271875f76f8e6d7e62180e29b2cfda72"
   solver-name = "gps-cdcl"
   solver-version = 1
