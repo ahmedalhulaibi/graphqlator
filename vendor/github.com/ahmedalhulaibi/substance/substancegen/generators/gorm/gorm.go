@@ -44,7 +44,7 @@ func GenObjectGormCreateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 
 /*GenObjectGormReadFunc generates functions for basic CRUD Read/Get using gorm and writes it to a buffer*/
 func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tdb.Where(&query{{.Name}}).First(result{{.Name}})\n}"
+	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *[]{{.Name}}) {\n\tdb.Where(&query{{.Name}}).Find(result{{.Name}})\n}"
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
 	if err != nil {
@@ -63,7 +63,7 @@ func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 	searchKeyTypes := []string{"p", "PRIMARY KEY", "u", "UNIQUE"}
 	keyColumn := ""
 	for _, searchKeyType := range searchKeyTypes {
-		keyColumn = SearchForKeyColumnByKeyType(gqlObjectType, searchKeyType)
+		keyColumn = substancegen.SearchForKeyColumnByKeyType(gqlObjectType, searchKeyType)
 		if keyColumn != "" {
 			break
 		}
@@ -94,26 +94,6 @@ func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 		log.Fatal("Execute: ", err1)
 		return
 	}
-}
-
-/*SearchForKeyColumnByKeyType returns a string containing the name of the column of a certain key type*/
-func SearchForKeyColumnByKeyType(gqlObjectType substancegen.GenObjectType, searchKeyType string) string {
-	keyColumn := ""
-	//Loop through all properties in alphabetic order (key sorted)
-	//This prevents different keys being identified across multiple runs using the same input data
-	propKeys := make([]string, 0)
-	for propKey := range gqlObjectType.Properties {
-		propKeys = append(propKeys, propKey)
-	}
-	sort.Strings(propKeys)
-	for _, propKey := range propKeys {
-		propVal := gqlObjectType.Properties[propKey]
-		if substancegen.StringInSlice(searchKeyType, propVal.KeyType) {
-			keyColumn = propVal.ScalarNameUpper
-			break
-		}
-	}
-	return keyColumn
 }
 
 /*GenObjectGormDeleteFunc generates functions for basic CRUD Delete using gorm and writes it to a buffer*/

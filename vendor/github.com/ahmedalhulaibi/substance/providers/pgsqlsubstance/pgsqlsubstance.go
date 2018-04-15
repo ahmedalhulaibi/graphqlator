@@ -225,6 +225,7 @@ func (p pgsql) DescribeTableRelationshipFunc(dbType string, connectionString str
 	return columnDesc, nil
 }
 
+/*DescribeTableConstraintsFunc returns an array of ColumnConstraint objects*/
 func (p pgsql) DescribeTableConstraintsFunc(dbType string, connectionString string, tableName string) ([]substance.ColumnConstraint, error) {
 	db, err := sql.Open(dbType, connectionString)
 	defer db.Close()

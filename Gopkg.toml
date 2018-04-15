@@ -27,7 +27,7 @@
 required = ["github.com/go-sql-driver/mysql","github.com/lib/pq"]
 
 [[constraint]]
-  branch = "master"
+  branch = "feature/gqlgen"
   name = "github.com/ahmedalhulaibi/substance"
 
 [[constraint]]

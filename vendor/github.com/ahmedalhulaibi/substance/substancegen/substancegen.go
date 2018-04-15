@@ -41,7 +41,7 @@ type GenObjectProperty struct {
 	ScalarName      string `json:"scalarName"`
 	ScalarNameUpper string
 	ScalarType      string `json:"scalarType"`
-	AltScalarType   string
+	AltScalarType   map[string]string
 	IsList          bool         `json:"isList"`
 	Nullable        bool         `json:"nullable"`
 	KeyType         []string     `json:"keyType"`
@@ -67,7 +67,7 @@ func Generate(generatorName string, dbType string, connectionString string, tabl
 	return SubstanceGenPlugins[generatorName].OutputCodeFunc(dbType, connectionString, GetObjectTypesFunc(dbType, connectionString, tableNames))
 }
 
-/*GetObjectTypesFunc*/
+/*GetObjectTypesFunc returns all object definitions as a map given tableNames and connectionString*/
 func GetObjectTypesFunc(dbType string, connectionString string, tableNames []string) map[string]GenObjectType {
 	//init array of column descriptions for all tables
 	tableDesc := []substance.ColumnDescription{}
@@ -103,6 +103,7 @@ func GetObjectTypesFunc(dbType string, connectionString string, tableNames []str
 			ScalarName:      colDesc.PropertyName,
 			ScalarNameUpper: colDescPropNameUpper,
 			ScalarType:      colDesc.PropertyType,
+			AltScalarType:   make(map[string]string),
 			Nullable:        colDesc.Nullable,
 			KeyType:         []string{""},
 		}
@@ -120,6 +121,7 @@ func GetObjectTypesFunc(dbType string, connectionString string, tableNames []str
 	return gqlObjectTypes
 }
 
+/*ResolveRelationshipsFunc calls out to multiple functions to orchestrate the resolution of constraints and relationships*/
 func ResolveRelationshipsFunc(dbType string, connectionString string, tableNames []string, gqlObjectTypes map[string]GenObjectType) map[string]GenObjectType {
 	relationshipDesc := []substance.ColumnRelationship{}
 	constraintDesc := []substance.ColumnConstraint{}
@@ -146,6 +148,8 @@ func ResolveRelationshipsFunc(dbType string, connectionString string, tableNames
 	return gqlObjectTypes
 }
 
+/*ResolveConstraintsFunc maps assigns key constraints received from ColumnConstraint and appends them to an array for the corresponding property
+This function also appends gorm tags for primary_key constraints*/
 func ResolveConstraintsFunc(dbType string, constraintDesc []substance.ColumnConstraint, gqlObjectTypes map[string]GenObjectType) {
 	for _, constraint := range constraintDesc {
 		gqlKeyTypes := &gqlObjectTypes[constraint.TableName].Properties[constraint.ColumnName].KeyType
@@ -182,6 +186,29 @@ func ResolveConstraintsFunc(dbType string, constraintDesc []substance.ColumnCons
 	}
 }
 
+/*ResolveForeignRefsFunc resolves the foreign key relationships between objects and inserts properties that have associations
+This is able to handle many-to-one and one-to-many
+Untested is the many-to-many assocation using a cross-reference table. For example:
+	Customer table
+		ID
+		NAME
+	Account table
+		AccountNumber
+		Product
+	CustomerToAccount table
+		CustomerID <- Foreign Key
+		AccountNumber <- Foreign Key
+		RelationshipType
+	The current expected result is that this would resolve to:
+	struct Customer type{
+		...
+		CustomerToAccount []CustomerToAccountType
+	}
+	struct Account type{
+		...
+		CustomerToAccount []CustomerToAccountType
+	}
+*/
 func ResolveForeignRefsFunc(dbType string, relationshipDesc []substance.ColumnRelationship, gqlObjectTypes map[string]GenObjectType) {
 	for _, colRel := range relationshipDesc {
 		_, colRelTableOk := gqlObjectTypes[colRel.TableName]
@@ -222,6 +249,7 @@ func ResolveForeignRefsFunc(dbType string, relationshipDesc []substance.ColumnRe
 					Nullable:        true,
 					IsList:          true,
 					IsObjectType:    true,
+					AltScalarType:   make(map[string]string),
 				}
 				newGqlObjProperty.Tags = make(GenObjectTag)
 				newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)
@@ -237,6 +265,7 @@ func ResolveForeignRefsFunc(dbType string, relationshipDesc []substance.ColumnRe
 					Nullable:        true,
 					IsList:          false,
 					IsObjectType:    true,
+					AltScalarType:   make(map[string]string),
 				}
 				newGqlObjProperty.Tags = make(GenObjectTag)
 				newGqlObjProperty.Tags["gorm"] = append(newGqlObjProperty.Tags["gorm"], gormTagForeign, gormTagAssociationForeign)

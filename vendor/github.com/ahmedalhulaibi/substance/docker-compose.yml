@@ -1,0 +1,21 @@
+version: '3'
+services:
+  pgsqldbsubstance:
+    restart: always
+    container_name: pgsqldbsubstance
+    image: postgres
+    environment:
+      - POSTGRES_USER=travis_test
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+  mysqldbsubstance:
+    restart: always
+    container_name: mysqldbsubstance
+    image: mysql
+    environment:
+      - MYSQL_DATABASE=delivery
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "3306:3306"
