@@ -18,7 +18,7 @@ func init() {
 	substancegen.Register("graphql-go", gqlPlugin)
 }
 
-/*InitGraphqlDataTypes initializes gqlPlugin data like go to graphql-go type mapping*/
+/*InitGraphqlDataTypes initializes gqlPlugin data for go to graphql-go type mapping*/
 func InitGraphqlDataTypes(gqlPlugin *Gql) {
 	gqlPlugin.GraphqlDataTypes = make(map[string]string)
 	gqlPlugin.GraphqlDataTypes["int"] = "graphql.Int"

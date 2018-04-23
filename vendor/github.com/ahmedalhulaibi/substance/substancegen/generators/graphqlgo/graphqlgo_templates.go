@@ -26,7 +26,7 @@ func main() {
 
 	fmt.Println("Test with Get	:	curl -g 'http://localhost:8080/graphql?query={ {{.SampleQuery}} }'")
 
-	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: Fields}
+	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: QueryFields}
 	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
 	schema, err := graphql.NewSchema(schemaConfig)
 	if err != nil {
@@ -60,19 +60,38 @@ var {{.LowerName}}Type = graphql.NewObject(
 {{end}}`
 
 var graphqlGoFieldsTemplate = `
-	var QueryFields = graphql.Fields{ {{range $key, $value := . }}{{$name := .Name}}
-		"{{.Name}}": &graphql.Field{
-			Type: {{.LowerName}}Type,
-			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				{{.Name}}Obj := {{.Name}}{}
-				DB.First(&{{.Name}}Obj){{range .Properties}}{{if .IsObjectType}}
-				{{.ScalarName}}Obj := {{if .IsList}}[]{{end}}{{.ScalarType}}{}
-				DB.Model(&{{$name}}Obj).Association("{{.ScalarName}}").Find(&{{.ScalarName}}Obj)
-				{{$name}}Obj.{{.ScalarName}} = {{if .IsList}}append({{$name}}Obj.{{.ScalarName}}, {{.ScalarName}}Obj...){{else}}{{.ScalarName}}Obj{{end}}{{end}}{{end}}
-				return {{$name}}Obj, nil
-			},
-		},{{end}}
+var QueryFields graphql.Fields
+
+func init() {
+	QueryFields = make(graphql.Fields,1)
+	{{template "graphqlFieldsGet" .}}
 }
 `
 
 var graphqlQueryTemplate = `{{range $key, $value := . }}{{.Name}} { {{range .Properties}}{{if not .IsObjectType}}{{.ScalarName}},{{end}} {{end}}},{{end}}`
+
+var graphqlGoQueryFieldsGetTemplate = `{{define "graphqlFieldsGet"}}{{range $key, $value := . }}
+	QueryFields["Get{{.Name}}"] = &graphql.Field{
+		Type: {{.LowerName}}Type,
+		Args: graphql.FieldConfigArgument{
+			{{range .Properties}}{{if not .IsObjectType}}"{{.ScalarName}}": &graphql.ArgumentConfig{
+					Type: {{index .AltScalarType "graphql-go"}},
+			},
+			{{end}}{{end}}
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			Query{{.Name}}Obj := {{.Name}}{}
+		{{range .Properties}}	{{if not .IsObjectType}}if val, ok := p.Args["{{.ScalarName}}"]; ok {
+				Query{{$value.Name}}Obj.{{.ScalarName}} = {{$type := goType .ScalarType}}{{if eq .ScalarType  $type}}val.({{.ScalarType}}){{else}} {{.ScalarType}}(val.({{$type}})){{end}}
+			}
+		{{end}}{{end}}{{$name := .Name}}
+			var Result{{$name}}Obj {{.Name}}
+			Get{{.Name}}(DB,Query{{.Name}}Obj,&Result{{$name}}Obj){{range .Properties}}{{if .IsObjectType}}
+			{{.ScalarName}}Obj := {{if .IsList}}[]{{end}}{{.ScalarType}}{}
+			DB.Model(&Result{{$name}}Obj).Association("{{.ScalarName}}").Find(&{{.ScalarName}}Obj)
+			Result{{$name}}Obj.{{.ScalarName}} = {{if .IsList}}append(Result{{$name}}Obj.{{.ScalarName}}, {{.ScalarName}}Obj...){{else}}{{.ScalarName}}Obj{{end}}{{end}}{{end}}
+			return Result{{$name}}Obj, nil
+		},
+	}
+{{end}}{{end}}
+`

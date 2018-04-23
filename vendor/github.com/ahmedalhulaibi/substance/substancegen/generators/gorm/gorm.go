@@ -44,7 +44,23 @@ func GenObjectGormCreateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 
 /*GenObjectGormReadFunc generates functions for basic CRUD Read/Get using gorm and writes it to a buffer*/
 func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *[]{{.Name}}) {\n\tdb.Where(&query{{.Name}}).Find(result{{.Name}})\n}"
+	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tdb.Where(&query{{.Name}}).First(result{{.Name}})\n}"
+	tmpl := template.New("gormReadFunc")
+	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
+	if err != nil {
+		log.Fatal("Parse: ", err)
+		return
+	}
+	err1 := tmpl.Execute(buff, gqlObjectType)
+	if err1 != nil {
+		log.Fatal("Execute: ", err1)
+		return
+	}
+}
+
+/*GenObjectGormReadAllFunc generates functions for basic CRUD Read/Get All using gorm and writes it to a buffer*/
+func GenObjectGormReadAllFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
+	gormReadFuncTemplate := "\n\nfunc GetAll{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} []{{.Name}}) {\n\tdb.Where(&query{{.Name}}).Find(result{{.Name}})\n}"
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
 	if err != nil {
@@ -117,6 +133,8 @@ func GenObjectGormCrud(gqlObjectType substancegen.GenObjectType, buff *bytes.Buf
 	GenObjectGormCreateFunc(gqlObjectType, buff)
 
 	GenObjectGormReadFunc(gqlObjectType, buff)
+
+	GenObjectGormReadAllFunc(gqlObjectType, buff)
 
 	GenObjectGormUpdateFunc(gqlObjectType, buff)
 
