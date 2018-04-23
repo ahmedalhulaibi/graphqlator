@@ -28,7 +28,7 @@ func GenGormObjectTableNameOverrideFunc(gqlObjectType substancegen.GenObjectType
 
 /*GenObjectGormCreateFunc generates functions for basic CRUD Create using gorm and writes it to a buffer*/
 func GenObjectGormCreateFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormCreateFuncTemplate := "\n\nfunc Create{{.Name}} (db *gorm.DB, new{{.Name}} {{.Name}}) {\n\tdb.Create(&new{{.Name}})\n}"
+	gormCreateFuncTemplate := "\n\nfunc Create{{.Name}} (db *gorm.DB, new{{.Name}} {{.Name}}) []error {\n\treturn db.Create(&new{{.Name}}).GetErrors()\n}"
 	tmpl := template.New("gormCreateFunc")
 	tmpl, err := tmpl.Parse(gormCreateFuncTemplate)
 	if err != nil {
@@ -44,7 +44,7 @@ func GenObjectGormCreateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 
 /*GenObjectGormReadFunc generates functions for basic CRUD Read/Get using gorm and writes it to a buffer*/
 func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tdb.Where(&query{{.Name}}).First(result{{.Name}})\n}"
+	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) []error {\n\treturn db.Where(&query{{.Name}}).First(result{{.Name}}).GetErrors()\n}"
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
 	if err != nil {
@@ -60,7 +60,7 @@ func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes
 
 /*GenObjectGormReadAllFunc generates functions for basic CRUD Read/Get All using gorm and writes it to a buffer*/
 func GenObjectGormReadAllFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormReadFuncTemplate := "\n\nfunc GetAll{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} []{{.Name}}) {\n\tdb.Where(&query{{.Name}}).Find(result{{.Name}})\n}"
+	gormReadFuncTemplate := "\n\nfunc GetAll{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} []{{.Name}}) []error {\n\treturn db.Where(&query{{.Name}}).Find(result{{.Name}}).GetErrors()\n}"
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
 	if err != nil {
@@ -98,7 +98,7 @@ func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 		keyColumn,
 	}
 
-	gormUpdateFuncTemplate := "\n\nfunc Update{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}, new{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) {\n\tvar oldResult{{.Name}} {{.Name}}\n\tdb.Where(&old{{.Name}}).First(&oldResult{{.Name}})\n\tif oldResult{{.Name}}.{{.Key}} == new{{.Name}}.{{.Key}} {\n\t\toldResult{{.Name}} = new{{.Name}}\n\t\tdb.Save(oldResult{{.Name}})\n\t}\n\tGet{{.Name}}(db, new{{.Name}}, result{{.Name}})\n}"
+	gormUpdateFuncTemplate := "\n\nfunc Update{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}, new{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) []error {\n\tvar oldResult{{.Name}} {{.Name}}\n\terr := db.Where(&old{{.Name}}).First(&oldResult{{.Name}}).GetErrors()\n\tif oldResult{{.Name}}.{{.Key}} == new{{.Name}}.{{.Key}} {\n\t\toldResult{{.Name}} = new{{.Name}}\n\t\terr = append(err,db.Save(oldResult{{.Name}}).GetErrors()...)\n\t}\n\terr = append(err,Get{{.Name}}(db, new{{.Name}}, result{{.Name}})...)\n\treturn err\n}"
 	tmpl := template.New("gormUpdateFunc")
 	tmpl, err := tmpl.Parse(gormUpdateFuncTemplate)
 	if err != nil {
@@ -114,7 +114,7 @@ func GenObjectGormUpdateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 
 /*GenObjectGormDeleteFunc generates functions for basic CRUD Delete using gorm and writes it to a buffer*/
 func GenObjectGormDeleteFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormDeleteFuncTemplate := "\n\nfunc Delete{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}) {\n\tdb.Delete(&old{{.Name}})\n}"
+	gormDeleteFuncTemplate := "\n\nfunc Delete{{.Name}} (db *gorm.DB, old{{.Name}} {{.Name}}) []error {\n\treturn db.Delete(&old{{.Name}}).GetErrors()\n}"
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormDeleteFuncTemplate)
 	if err != nil {

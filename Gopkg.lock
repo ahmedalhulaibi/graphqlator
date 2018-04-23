@@ -15,7 +15,7 @@
     "substancegen/generators/gqlschema",
     "substancegen/generators/graphqlgo"
   ]
-  revision = "fbb7f310a1f6c3cd2fc5dba5bd8f4d190b267d3c"
+  revision = "22d2243aacc310cb51529abfa6de29b9f7506e0e"
 
 [[projects]]
   name = "github.com/apex/log"

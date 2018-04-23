@@ -192,7 +192,7 @@ func GenGraphqlGoMutationsFunc(gqlObjectTypes map[string]substancegen.GenObjectT
 		"goType": GetGoNumericAliasType,
 	}
 	tmpl := template.New("graphqlGoFieldsMutation").Funcs(funcMap)
-	tmpl, err := tmpl.Parse(strings.Join([]string{graphqlGoFieldsMutationTemplate, graphqlGoMutationCreateTemplate}, ""))
+	tmpl, err := tmpl.Parse(strings.Join([]string{graphqlGoFieldsMutationTemplate, graphqlGoMutationCreateTemplate, graphqlGoMutationDeleteTemplate}, ""))
 	if err != nil {
 		log.Fatal("Parse: ", err)
 		return
@@ -213,6 +213,26 @@ func GenGraphqlGoFieldsCreateFunc(gqlObjectTypes map[string]substancegen.GenObje
 	tmpl := template.New("graphqlFieldsCreate").Funcs(funcMap)
 
 	tmpl, err := tmpl.Parse(graphqlGoMutationCreateTemplate)
+	if err != nil {
+		log.Fatal("Parse: ", err)
+		return
+	}
+	//print schema
+	err1 := tmpl.Execute(buff, gqlObjectTypes)
+	if err1 != nil {
+		log.Fatal("Execute: ", err1)
+	}
+}
+
+/*GenGraphqlGoFieldsDeleteFunc generates a basic graphql-go mutation
+to delete an object and add it to a database*/
+func GenGraphqlGoFieldsDeleteFunc(gqlObjectTypes map[string]substancegen.GenObjectType, buff *bytes.Buffer) {
+	funcMap := template.FuncMap{
+		"goType": GetGoNumericAliasType,
+	}
+	tmpl := template.New("graphqlFieldsDelete").Funcs(funcMap)
+
+	tmpl, err := tmpl.Parse(graphqlGoMutationDeleteTemplate)
 	if err != nil {
 		log.Fatal("Parse: ", err)
 		return
