@@ -45,7 +45,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 	Args: cobra.MaximumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		gqlPkg := getGraphqlatorPkgFile()
-		gqlGen := substancegen.SubstanceGenPlugins["graphql-go"].(graphqlgo.Gql)
+		gqlgoPlugin := substancegen.SubstanceGenPlugins["graphql-go"].(graphqlgo.Gql)
 		gqlObjectTypes := substancegen.GetObjectTypesFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlPkg.TableNames)
 		substancegen.AddJSONTagsToProperties(gqlObjectTypes)
 
@@ -57,7 +57,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				mainFile := createFile("main.go", true)
 
 				var mainFileBuffer bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &mainFileBuffer)
+				gqlgoPlugin.GenPackageImports(gqlPkg.DatabaseType, &mainFileBuffer)
 				mainFileBuffer.WriteString(graphqlgo.GraphqlGoExecuteQueryFunc)
 				graphqlgo.GenGraphqlGoMainFunc(gqlPkg.DatabaseType, gqlPkg.ConnectionString, gqlObjectTypes, &mainFileBuffer)
 				_, err := mainFile.Write(mainFileBuffer.Bytes())
@@ -71,8 +71,8 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				graphqlTypesFile := createFile("graphqlTypes.go", true)
 
 				var graphqlTypesFileBuff bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &graphqlTypesFileBuff)
-				gqlGen.GenerateGraphqlGoTypesFunc(gqlObjectTypes, &graphqlTypesFileBuff)
+				gqlgoPlugin.GenPackageImports(gqlPkg.DatabaseType, &graphqlTypesFileBuff)
+				gqlgoPlugin.GenerateGraphqlGoTypesFunc(gqlObjectTypes, &graphqlTypesFileBuff)
 
 				_, err := graphqlTypesFile.Write(graphqlTypesFileBuff.Bytes())
 				if err != nil {
@@ -85,7 +85,7 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				dataModelFile := createFile("model.go", true)
 
 				var dataModelFileBuff bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &dataModelFileBuff)
+				gqlgoPlugin.GenPackageImports(gqlPkg.DatabaseType, &dataModelFileBuff)
 				gostruct.GenObjectTypeToStructFunc(gqlObjectTypes, &dataModelFileBuff)
 				keys := make([]string, 0)
 				for key := range gqlObjectTypes {
@@ -106,21 +106,22 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				gqlFieldsFile := createFile("graphqlFields.go", true)
 
 				var gqlFieldsFileBuff bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gqlFieldsFileBuff)
-
+				gqlgoPlugin.GenPackageImports(gqlPkg.DatabaseType, &gqlFieldsFileBuff)
+				gqlgoPlugin.PopulateAltScalarType(gqlObjectTypes, false, true)
 				graphqlgo.GenGraphqlGoFieldsFunc(gqlObjectTypes, &gqlFieldsFileBuff)
 				_, err := gqlFieldsFile.Write(gqlFieldsFileBuff.Bytes())
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				gqlFieldsFile.Close()
+				gqlgoPlugin.PopulateAltScalarType(gqlObjectTypes, false, false)
 			}
 
 			if updateGormQueries || updateAll {
 				gormQueriesFile := createFile("gormQueries.go", true)
 
 				var gormQueriesFileBuff bytes.Buffer
-				gqlGen.GenPackageImports(gqlPkg.DatabaseType, &gormQueriesFileBuff)
+				gqlgoPlugin.GenPackageImports(gqlPkg.DatabaseType, &gormQueriesFileBuff)
 				gorm.GenObjectsGormCrud(gqlObjectTypes, &gormQueriesFileBuff)
 				_, err := gormQueriesFile.Write(gormQueriesFileBuff.Bytes())
 				if err != nil {
