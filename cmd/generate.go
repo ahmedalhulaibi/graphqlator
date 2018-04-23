@@ -21,6 +21,7 @@ import (
 var updateSchema bool
 var updateGormQueries bool
 var updateGqlFields bool
+var updateGqlMutations bool
 var updateGqlTypes bool
 var updateModel bool
 var updateMain bool
@@ -30,8 +31,9 @@ func init() {
 	generate.Flags().BoolVarP(&updateSchema, "update-schema", "u", false, "update and overwrite schema.graphql")
 	generate.Flags().BoolVarP(&updateGormQueries, "update-gormQueries", "q", false, "update and overwrite gormQueries.go")
 	generate.Flags().BoolVarP(&updateGqlFields, "update-gqlFields", "g", false, "update and overwrite graphqlFields.go")
+	generate.Flags().BoolVarP(&updateGqlMutations, "update-gqlMutations", "m", false, "update and overwrite graphqlMutations.go")
 	generate.Flags().BoolVarP(&updateGqlTypes, "update-gqlTypes", "t", false, "update and overwrite graphqlTypes.go")
-	generate.Flags().BoolVarP(&updateMain, "update-main", "m", false, "update and overwrite main.go")
+	generate.Flags().BoolVarP(&updateMain, "update-main", "M", false, "update and overwrite main.go")
 	generate.Flags().BoolVarP(&updateModel, "update-gormStruct", "s", false, "update and overwrite model.go")
 	generate.Flags().BoolVarP(&updateAll, "update-all", "a", false, "update and overwrite all files")
 	RootCmd.AddCommand(generate)
@@ -115,6 +117,20 @@ Run 'graphqlator init' before running 'graphqlator generate'`,
 				}
 				gqlFieldsFile.Close()
 				gqlgoPlugin.PopulateAltScalarType(gqlObjectTypes, false, false)
+			}
+
+			if updateGqlMutations || updateAll {
+				gqlMutationsFile := createFile("graphqlMutations.go", true)
+
+				var gqlMutationsFileBuff bytes.Buffer
+				gqlgoPlugin.GenPackageImports(gqlPkg.DatabaseType, &gqlMutationsFileBuff)
+				gqlgoPlugin.PopulateAltScalarType(gqlObjectTypes, false, false)
+				graphqlgo.GenGraphqlGoMutationsFunc(gqlObjectTypes, &gqlMutationsFileBuff)
+				_, err := gqlMutationsFile.Write(gqlMutationsFileBuff.Bytes())
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				gqlMutationsFile.Close()
 			}
 
 			if updateGormQueries || updateAll {

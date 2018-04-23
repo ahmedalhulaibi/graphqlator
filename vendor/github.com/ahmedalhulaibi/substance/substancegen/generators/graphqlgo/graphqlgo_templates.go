@@ -27,7 +27,8 @@ func main() {
 	fmt.Println("Test with Get	:	curl -g 'http://localhost:8080/graphql?query={ {{.SampleQuery}} }'")
 
 	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: QueryFields}
-	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
+	rootMutation := graphql.ObjectConfig{Name: "RootMutation", Fields: MutationFields}
+	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery), Mutation: graphql.NewObject(rootMutation)}
 	schema, err := graphql.NewSchema(schemaConfig)
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -59,7 +60,7 @@ var {{.LowerName}}Type = graphql.NewObject(
 )
 {{end}}`
 
-var graphqlGoFieldsTemplate = `
+var graphqlGoFieldsQueryTemplate = `
 var QueryFields graphql.Fields
 
 func init() {
@@ -68,7 +69,7 @@ func init() {
 }
 `
 
-var graphqlQueryTemplate = `{{range $key, $value := . }}{{.Name}} { {{range .Properties}}{{if not .IsObjectType}}{{.ScalarName}},{{end}} {{end}}},{{end}}`
+var graphqlQueryTemplate = `{{range $key, $value := . }}Get{{.Name}} { {{range .Properties}}{{if not .IsObjectType}}{{.ScalarName}},{{end}} {{end}}},{{end}}`
 
 var graphqlGoQueryFieldsGetTemplate = `{{define "graphqlFieldsGet"}}{{range $key, $value := . }}
 	QueryFields["Get{{.Name}}"] = &graphql.Field{
@@ -91,6 +92,40 @@ var graphqlGoQueryFieldsGetTemplate = `{{define "graphqlFieldsGet"}}{{range $key
 			DB.Model(&Result{{$name}}Obj).Association("{{.ScalarName}}").Find(&{{.ScalarName}}Obj)
 			Result{{$name}}Obj.{{.ScalarName}} = {{if .IsList}}append(Result{{$name}}Obj.{{.ScalarName}}, {{.ScalarName}}Obj...){{else}}{{.ScalarName}}Obj{{end}}{{end}}{{end}}
 			return Result{{$name}}Obj, nil
+		},
+	}
+{{end}}{{end}}
+`
+
+var graphqlGoFieldsMutationTemplate = `
+var MutationFields graphql.Fields
+
+func init() {
+	MutationFields = make(graphql.Fields,1)
+	{{template "graphqlFieldsCreate" .}}
+}
+`
+
+var graphqlGoMutationCreateTemplate = `{{define "graphqlFieldsCreate"}}{{range $key, $value := . }}
+	MutationFields["Create{{.Name}}"] = &graphql.Field{
+		Type: {{.LowerName}}Type,
+		Args: graphql.FieldConfigArgument{
+			{{range .Properties}}{{if not .IsObjectType}}"{{.ScalarName}}": &graphql.ArgumentConfig{
+					Type: {{index .AltScalarType "graphql-go"}},
+			},
+			{{end}}{{end}}
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			Query{{.Name}}Obj := {{.Name}}{}
+		{{range .Properties}}	{{if not .IsObjectType}}if val, ok := p.Args["{{.ScalarName}}"]; ok {
+				Query{{$value.Name}}Obj.{{.ScalarName}} = {{$type := goType .ScalarType}}{{if eq .ScalarType  $type}}val.({{.ScalarType}}){{else}} {{.ScalarType}}(val.({{$type}})){{end}}
+			}
+		{{end}}{{end}}
+			Create{{.Name}}(DB,Query{{.Name}}Obj)
+			var Result{{.Name}}Obj {{.Name}}
+			Get{{.Name}}(DB,Query{{.Name}}Obj,&Result{{.Name}}Obj)
+
+			return Result{{.Name}}Obj, nil
 		},
 	}
 {{end}}{{end}}
