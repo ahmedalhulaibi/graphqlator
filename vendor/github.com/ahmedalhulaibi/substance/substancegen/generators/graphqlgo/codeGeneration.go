@@ -96,7 +96,7 @@ func GenGraphqlGoFieldsFunc(gqlObjectTypes map[string]substancegen.GenObjectType
 		"goType": GetGoNumericAliasType,
 	}
 	tmpl := template.New("graphqlFields").Funcs(funcMap)
-	tmpl, err := tmpl.Parse(strings.Join([]string{graphqlGoFieldsQueryTemplate, graphqlGoQueryFieldsGetTemplate}, ""))
+	tmpl, err := tmpl.Parse(strings.Join([]string{graphqlGoFieldsQueryTemplate, graphqlGoQueryFieldsGetTemplate, graphqlGoQueryFieldsGetAllTemplate}, ""))
 	if err != nil {
 		log.Fatal("Parse: ", err)
 		return
@@ -255,6 +255,26 @@ func GenGraphqlGoFieldsUpdateFunc(gqlObjectTypes map[string]substancegen.GenObje
 	tmpl := template.New("graphqlFieldsUpdate").Funcs(funcMap)
 
 	tmpl, err := tmpl.Parse(graphqlGoMutationUpdateTemplate)
+	if err != nil {
+		log.Fatal("Parse: ", err)
+		return
+	}
+	//print schema
+	err1 := tmpl.Execute(buff, gqlObjectTypes)
+	if err1 != nil {
+		log.Fatal("Execute: ", err1)
+	}
+}
+
+/*GenGraphqlGoFieldsGetAllFunc generates a basic graphql-go query
+to retrieve all elements of each object type (does not retrieve its associations) from a database*/
+func GenGraphqlGoFieldsGetAllFunc(gqlObjectTypes map[string]substancegen.GenObjectType, buff *bytes.Buffer) {
+	funcMap := template.FuncMap{
+		"goType": GetGoNumericAliasType,
+	}
+	tmpl := template.New("graphqlFieldsGetAll").Funcs(funcMap)
+
+	tmpl, err := tmpl.Parse(graphqlGoQueryFieldsGetAllTemplate)
 	if err != nil {
 		log.Fatal("Parse: ", err)
 		return

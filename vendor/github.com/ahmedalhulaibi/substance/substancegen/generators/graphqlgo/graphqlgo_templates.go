@@ -66,6 +66,7 @@ var QueryFields graphql.Fields
 func init() {
 	QueryFields = make(graphql.Fields,1)
 	{{template "graphqlFieldsGet" .}}
+	{{template "graphqlFieldsGetAll" .}}
 }
 `
 
@@ -188,6 +189,32 @@ var graphqlGoMutationUpdateTemplate = `{{define "graphqlFieldsUpdate"}}{{range $
 				return Result{{.Name}}Obj, err[len(err)-1]
 			}
 			return Result{{.Name}}Obj, nil
+		},
+	}
+{{end}}{{end}}
+`
+
+var graphqlGoQueryFieldsGetAllTemplate = `{{define "graphqlFieldsGetAll"}}{{range $key, $value := . }}
+	QueryFields["GetAll{{.Name}}"] = &graphql.Field{
+		Type: graphql.NewList({{.LowerName}}Type),
+		Args: graphql.FieldConfigArgument{
+			{{range .Properties}}{{if not .IsObjectType}}"{{.ScalarName}}": &graphql.ArgumentConfig{
+					Type: {{index .AltScalarType "graphql-go"}},
+			},
+			{{end}}{{end}}
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			Query{{.Name}}Obj := {{.Name}}{}
+		{{range .Properties}}	{{if not .IsObjectType}}if val, ok := p.Args["{{.ScalarName}}"]; ok {
+				Query{{$value.Name}}Obj.{{.ScalarName}} = {{$type := goType .ScalarType}}{{if eq .ScalarType  $type}}val.({{.ScalarType}}){{else}} {{.ScalarType}}(val.({{$type}})){{end}}
+			}
+		{{end}}{{end}}{{$name := .Name}}
+			var Result{{$name}}Obj []{{.Name}}
+			err := GetAll{{.Name}}(DB,Query{{.Name}}Obj,&Result{{$name}}Obj)
+			if len(err) > 0 {
+				return Result{{$name}}Obj, err[len(err)-1]
+			}
+			return Result{{$name}}Obj, nil
 		},
 	}
 {{end}}{{end}}
