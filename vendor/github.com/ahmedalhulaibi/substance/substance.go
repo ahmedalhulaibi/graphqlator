@@ -28,6 +28,7 @@ type ColumnDescription struct {
 	PropertyName string
 	PropertyType string
 	KeyType      string
+	DefaultValue string
 	Nullable     bool
 }
 

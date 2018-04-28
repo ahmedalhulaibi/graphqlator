@@ -189,10 +189,11 @@ func GenGraphqlGoFieldsGetFunc(gqlObjectTypes map[string]substancegen.GenObjectT
 to rCreate, Update and Delete*/
 func GenGraphqlGoMutationsFunc(gqlObjectTypes map[string]substancegen.GenObjectType, buff *bytes.Buffer) {
 	funcMap := template.FuncMap{
-		"goType": GetGoNumericAliasType,
+		"goType":     GetGoNumericAliasType,
+		"getPkeyCol": substancegen.SearchForKeyColumnByKeyType,
 	}
 	tmpl := template.New("graphqlGoFieldsMutation").Funcs(funcMap)
-	tmpl, err := tmpl.Parse(strings.Join([]string{graphqlGoFieldsMutationTemplate, graphqlGoMutationCreateTemplate, graphqlGoMutationDeleteTemplate}, ""))
+	tmpl, err := tmpl.Parse(strings.Join([]string{graphqlGoFieldsMutationTemplate, graphqlGoMutationCreateTemplate, graphqlGoMutationDeleteTemplate, graphqlGoMutationUpdateTemplate}, ""))
 	if err != nil {
 		log.Fatal("Parse: ", err)
 		return
@@ -233,6 +234,27 @@ func GenGraphqlGoFieldsDeleteFunc(gqlObjectTypes map[string]substancegen.GenObje
 	tmpl := template.New("graphqlFieldsDelete").Funcs(funcMap)
 
 	tmpl, err := tmpl.Parse(graphqlGoMutationDeleteTemplate)
+	if err != nil {
+		log.Fatal("Parse: ", err)
+		return
+	}
+	//print schema
+	err1 := tmpl.Execute(buff, gqlObjectTypes)
+	if err1 != nil {
+		log.Fatal("Execute: ", err1)
+	}
+}
+
+/*GenGraphqlGoFieldsUpdateFunc generates a basic graphql-go mutation
+to update an object and save it to a database*/
+func GenGraphqlGoFieldsUpdateFunc(gqlObjectTypes map[string]substancegen.GenObjectType, buff *bytes.Buffer) {
+	funcMap := template.FuncMap{
+		"goType":     GetGoNumericAliasType,
+		"getPkeyCol": substancegen.SearchForKeyColumnByKeyType,
+	}
+	tmpl := template.New("graphqlFieldsUpdate").Funcs(funcMap)
+
+	tmpl, err := tmpl.Parse(graphqlGoMutationUpdateTemplate)
 	if err != nil {
 		log.Fatal("Parse: ", err)
 		return

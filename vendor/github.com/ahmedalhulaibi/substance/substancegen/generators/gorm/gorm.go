@@ -44,7 +44,13 @@ func GenObjectGormCreateFunc(gqlObjectType substancegen.GenObjectType, buff *byt
 
 /*GenObjectGormReadFunc generates functions for basic CRUD Read/Get using gorm and writes it to a buffer*/
 func GenObjectGormReadFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) []error {\n\treturn db.Where(&query{{.Name}}).First(result{{.Name}}).GetErrors()\n}"
+	//gormReadFuncTemplate := "\n\nfunc Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) []error {\n\treturn db.Where(&query{{.Name}}).First(result{{.Name}}).GetErrors()\n}"
+	gormReadFuncTemplate := `
+
+func Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Name}}) []error {
+	return db.Where(&query{{.Name}}).First(result{{.Name}}).GetErrors()
+}`
+
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
 	if err != nil {

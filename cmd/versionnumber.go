@@ -1,3 +1,3 @@
 package cmd
 
-var versionNumber = "v0.3.15-alpha"
+var versionNumber = "v0.3.16-alpha"

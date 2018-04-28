@@ -153,6 +153,8 @@ func (m mysql) DescribeTableFunc(dbType string, connectionString string, tableNa
 					if err != nil {
 						fmt.Printf("Warning: %s", err.Error())
 					}
+				case "Default":
+					newColDesc.DefaultValue = string(value.([]byte))
 				case "Key":
 					newColDesc.KeyType = string(value.([]byte))
 				case "Null":
