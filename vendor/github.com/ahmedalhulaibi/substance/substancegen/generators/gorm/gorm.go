@@ -66,7 +66,7 @@ func Get{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *{{.Na
 
 /*GenObjectGormReadAllFunc generates functions for basic CRUD Read/Get All using gorm and writes it to a buffer*/
 func GenObjectGormReadAllFunc(gqlObjectType substancegen.GenObjectType, buff *bytes.Buffer) {
-	gormReadFuncTemplate := "\n\nfunc GetAll{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} []{{.Name}}) []error {\n\treturn db.Where(&query{{.Name}}).Find(result{{.Name}}).GetErrors()\n}"
+	gormReadFuncTemplate := "\n\nfunc GetAll{{.Name}} (db *gorm.DB, query{{.Name}} {{.Name}}, result{{.Name}} *[]{{.Name}}) []error {\n\treturn db.Where(&query{{.Name}}).Find(result{{.Name}}).GetErrors()\n}"
 	tmpl := template.New("gormReadFunc")
 	tmpl, err := tmpl.Parse(gormReadFuncTemplate)
 	if err != nil {
